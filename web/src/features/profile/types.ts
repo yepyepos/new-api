@@ -228,6 +228,11 @@ export interface CheckinStats {
 export interface CheckinStatusResponse {
   /** Whether check-in feature is enabled */
   enabled: boolean
+  quota: number
+  threshold_enabled: boolean
+  balance_threshold: number
+  timezone: string
+  today: string
   /** Check-in statistics */
   stats: CheckinStats
 }

@@ -1,0 +1,436 @@
+.nailong-landing-header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  padding: 24px 4vw;
+}
+.nailong-landing-nav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 13px 26px;
+  background: #fffcf06e;
+  border: 1px solid #fff9;
+  border-radius: 30px;
+  backdrop-filter: blur(14px);
+  font-size: 12px;
+}
+.nailong-landing-nav a {
+  color: #776039;
+}
+.nailong-landing-nav a[aria-current] {
+  color: #4c3c1e;
+  font-weight: 650;
+}
+.nailong-landing .nailong-landing-signin {
+  height: 38px;
+  padding: 0 17px;
+  border-radius: 30px;
+  background: #fff9;
+  border: 1px solid #fffc;
+  color: #5a4626;
+  font-size: 11px;
+  gap: 9px;
+  backdrop-filter: blur(12px);
+}
+.nailong-landing-hero {
+  min-height: min(960px, 100svh);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 160px 7vw 160px;
+}
+.nailong-landing-copy {
+  width: min(610px, 51%);
+  position: relative;
+  z-index: 1;
+  animation: nailong-arrive 0.7s ease both;
+}
+.nailong-landing-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #786235;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+.nailong-landing-eyebrow > span:first-child {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a98837;
+  box-shadow: 0 0 0 5px #b69a411a;
+}
+.nailong-edition {
+  margin-left: auto;
+  font:
+    9px Consolas,
+    monospace;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+.nailong-landing-copy h1 {
+  font-family: 'Lora Variable', 'STKaiti', 'KaiTi', serif;
+  font-size: clamp(39px, 4.2vw, 67px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.065em;
+  margin: 30px 0 23px;
+  color: #5d472c;
+  text-shadow: 0 2px 20px #fff9;
+}
+.nailong-landing-copy h1 em {
+  color: #9a7134;
+  font-weight: 500;
+  font-style: normal;
+}
+.nailong-landing-subtitle {
+  font-family: 'Lora Variable', 'STKaiti', 'KaiTi', serif;
+  color: #70583a;
+  font-size: 20px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.nailong-landing-description {
+  max-width: 420px;
+  font-size: 12px;
+  line-height: 2;
+  color: #78684e;
+}
+.nailong-landing-actions {
+  display: flex;
+  gap: 13px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+.nailong-landing .nailong-landing-primary {
+  height: 45px;
+  padding: 0 21px;
+  border: 1px solid #d7b04a;
+  background: #edc65b;
+  color: #57401a;
+  border-radius: 11px;
+  gap: 12px;
+  font-size: 12px;
+  box-shadow: 0 5px 15px #9e6e1712;
+}
+.nailong-landing .nailong-landing-secondary {
+  height: 45px;
+  padding: 0 19px;
+  border: 1px solid #fff;
+  background: #fff9;
+  color: #725d39;
+  border-radius: 11px;
+  gap: 9px;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+}
+.nailong-landing .nailong-landing-primary:hover {
+  background: #f4d479;
+}
+.nailong-landing .nailong-landing-secondary:hover {
+  background: #fff;
+}
+.nailong-landing-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: #77654c;
+  margin-top: 18px;
+}
+.nailong-landing-note svg {
+  width: 13px;
+  height: 13px;
+}
+.nailong-landing-postcard {
+  position: absolute;
+  bottom: 94px;
+  left: 5vw;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 16px 21px;
+  border-radius: 13px;
+  background: #fffaf0b0;
+  border: 1px solid #fff9;
+  backdrop-filter: blur(12px);
+  transform: rotate(-3deg);
+  box-shadow: 0 10px 30px #70501d12;
+  font-family: 'Lora Variable', 'STKaiti', 'KaiTi', serif;
+  font-size: 15px;
+}
+.nailong-landing-postcard svg {
+  width: 21px;
+  height: 21px;
+  grid-row: span 2;
+  color: #9b7939;
+}
+.nailong-landing-postcard small {
+  font:
+    8px Consolas,
+    monospace;
+  letter-spacing: 0.12em;
+  color: #8f7956;
+}
+.nailong-landing-scroll {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #5e4c31;
+  padding: 9px 14px;
+  border-radius: 30px;
+  background: #fff5;
+  backdrop-filter: blur(10px);
+}
+.nailong-landing-scroll svg {
+  width: 13px;
+  height: 13px;
+}
+.nailong-landing-coordinate {
+  position: absolute;
+  right: 4vw;
+  bottom: 44px;
+  font:
+    8px Consolas,
+    monospace;
+  letter-spacing: 0.12em;
+  color: #746345;
+}
+.nailong-landing-discover {
+  position: relative;
+  padding: 68px max(5vw, 24px) 44px;
+  background: #faf6eb;
+  border-top: 1px solid #fffc;
+  scroll-margin-top: 20px;
+}
+.nailong-discover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1230px;
+  margin: 0 auto 34px;
+  gap: 20px;
+}
+.nailong-discover-heading h2 {
+  font-family: 'Lora Variable', 'STKaiti', 'KaiTi', serif;
+  font-size: 34px;
+  line-height: 1.4;
+  margin-top: 13px;
+  color: #635136;
+}
+.nailong-discover-heading > svg {
+  width: 48px;
+  height: 48px;
+  stroke-width: 0.9;
+  color: #b99d5e;
+  flex-shrink: 0;
+}
+.nailong-landing-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 1230px;
+  margin: auto;
+  gap: 20px;
+}
+.nailong-landing-features article {
+  padding: 27px;
+  background: #fffdf6;
+  border: 1px solid #e9dfc8;
+  border-radius: 17px;
+}
+.nailong-landing-features article:nth-child(2) {
+  background: #f4f4e8;
+}
+.nailong-landing-features article:nth-child(3) {
+  background: #f8eee1;
+}
+.nailong-feature-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 29px;
+}
+.nailong-feature-top > svg {
+  width: 23px;
+  height: 23px;
+  color: #92733a;
+  stroke-width: 1.3;
+}
+.nailong-feature-top > span {
+  color: #9b8763;
+  font:
+    9px Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+}
+.nailong-landing-features h3 {
+  font-size: 17px;
+  font-weight: 550;
+  color: #5a492f;
+  margin-bottom: 12px;
+}
+.nailong-landing-features p {
+  font-size: 12px;
+  color: #7c6c55;
+  line-height: 1.9;
+  min-height: 50px;
+}
+.nailong-landing-features article > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #89672e;
+  font-size: 11px;
+  margin-top: 24px;
+}
+.nailong-landing-features a svg {
+  width: 13px;
+  height: 13px;
+}
+.nailong-landing-preview-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #847252;
+  margin: 34px auto 0;
+}
+.nailong-landing-preview-note svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.nailong-landing-footer {
+  background: #faf6eb;
+  border-top: 1px solid #e8dfcb;
+  padding: 22px 5vw;
+  color: #8d7c5c;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nailong-landing-copy {
+    animation: none;
+  }
+}
+@media (max-width: 900px) {
+  .nailong-landing-nav {
+    gap: 20px;
+    padding: 11px 18px;
+  }
+  .nailong-landing-hero {
+    padding: 140px 5vw 150px;
+    min-height: 800px;
+  }
+  .nailong-landing-copy {
+    width: 53%;
+  }
+  .nailong-landing-copy h1 {
+    font-size: 43px;
+  }
+  .nailong-edition {
+    display: none;
+  }
+  .nailong-landing-subtitle {
+    font-size: 17px;
+  }
+  .nailong-landing-postcard {
+    max-width: 40%;
+    font-size: 12px;
+  }
+  .nailong-landing-features article {
+    padding: 22px;
+  }
+}
+@media (max-width: 640px) {
+  .nailong-landing-header {
+    padding: 19px 20px;
+  }
+  .nailong-landing-nav {
+    display: none;
+  }
+  .nailong-landing .nailong-landing-signin {
+    height: 33px;
+    padding: 0 12px;
+    font-size: 10px;
+    gap: 6px;
+  }
+  .nailong-landing-hero {
+    padding: 132px 25px 140px;
+    min-height: 820px;
+    align-items: flex-start;
+  }
+  .nailong-landing-copy {
+    width: 100%;
+    padding: 22px;
+    border: 1px solid #fff9;
+    border-radius: 22px;
+    background: #fff8e7b8;
+    backdrop-filter: blur(14px);
+  }
+  .nailong-landing-copy h1 {
+    font-size: 38px;
+    margin: 22px 0 18px;
+  }
+  .nailong-landing-subtitle {
+    font-size: 16px;
+  }
+  .nailong-landing-description {
+    font-size: 11px;
+  }
+  .nailong-landing-actions {
+    gap: 10px;
+    margin-top: 23px;
+  }
+  .nailong-landing .nailong-landing-primary,
+  .nailong-landing .nailong-landing-secondary {
+    padding: 0 13px;
+    height: 41px;
+    font-size: 11px;
+    gap: 8px;
+  }
+  .nailong-landing-postcard {
+    left: 25px;
+    bottom: 97px;
+    max-width: calc(100% - 50px);
+    font-size: 13px;
+  }
+  .nailong-landing-coordinate {
+    display: none;
+  }
+  .nailong-landing-scroll {
+    bottom: 27px;
+  }
+  .nailong-landing-discover {
+    padding-top: 42px;
+  }
+  .nailong-discover-heading h2 {
+    font-size: 27px;
+  }
+  .nailong-discover-heading > svg {
+    width: 35px;
+    height: 35px;
+  }
+  .nailong-landing-features {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .nailong-landing-features article {
+    padding: 24px;
+  }
+  .nailong-feature-top {
+    margin-bottom: 20px;
+  }
+  .nailong-landing-features p {
+    min-height: 0;
+  }
+}

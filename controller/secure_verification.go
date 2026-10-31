@@ -39,6 +39,13 @@ func writeSecurityOperationError(c *gin.Context, err error) {
 	var code, message string
 	var protocolError *protocol.Error
 	switch {
+	case errors.Is(err, model.ErrRegistrationInvitationInvalid):
+		code, message = "REGISTRATION_INVITATION_INVALID", model.ErrRegistrationInvitationInvalid.Error()
+	case errors.Is(err, model.ErrOrdinaryRegistrationFull):
+		code, message = "ORDINARY_REGISTRATION_FULL", model.ErrOrdinaryRegistrationFull.Error()
+	case errors.Is(err, service.ErrDiscordLoginRequired):
+		status = http.StatusForbidden
+		code, message = "DISCORD_LOGIN_REQUIRED", service.ErrDiscordLoginRequired.Error()
 	case errors.Is(err, passkeysvc.ErrRPIDUnavailable):
 		code, message = "PASSKEY_RP_ID_UNAVAILABLE", "This Passkey domain is not available on this website. Use its original website or another verification method."
 	case errors.Is(err, system_setting.ErrPasskeyRPIDInvalid):

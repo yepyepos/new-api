@@ -56,6 +56,8 @@ async function renderLogs(props: {
   role: number
   enabledPlans: boolean[]
   activeSubscription: boolean
+  publicBenefitMode?: boolean
+  fetchStatus?: boolean
 }) {
   useAuthStore
     .getState()
@@ -73,7 +75,9 @@ async function renderLogs(props: {
   )
   vi.spyOn(api, 'get').mockImplementation(async (url) => {
     let data: unknown = { quota: 0, rpm: 0, tpm: 0 }
-    if (url === '/api/subscription/admin/plans') {
+    if (url === '/api/status') {
+      data = { public_benefit_mode_enabled: props.publicBenefitMode ?? false }
+    } else if (url === '/api/subscription/admin/plans') {
       data = props.enabledPlans.map((enabled) => ({ plan: { enabled } }))
     } else if (url === '/api/subscription/self') {
       data = {
@@ -109,6 +113,11 @@ async function renderLogs(props: {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  if (!props.fetchStatus) {
+    client.setQueryData(['status'], {
+      public_benefit_mode_enabled: props.publicBenefitMode ?? false,
+    })
+  }
   render(
     <QueryClientProvider client={client}>
       <UsageLogsProvider>
@@ -194,3 +203,42 @@ test('uses personal subscriptions when an admin switches to only-self view', asy
   await user.click(screen.getByRole('button', { name: 'Switch scope' }))
   expect(await screen.findByRole('img', { name: 'Wallet' })).toBeVisible()
 })
+
+test.each([
+  { role: ROLE.USER, fetchStatus: false },
+  { role: ROLE.ADMIN, fetchStatus: false },
+  { role: ROLE.ADMIN, fetchStatus: true },
+])(
+  'loads community usage logs without calling disabled subscription APIs ($role, fetch status: $fetchStatus)',
+  async ({ role, fetchStatus }) => {
+    const client = await renderLogs({
+      role,
+      enabledPlans: [true],
+      activeSubscription: true,
+      publicBenefitMode: true,
+      fetchStatus,
+    })
+
+    expect(
+      vi
+        .mocked(api.get)
+        .mock.calls.filter(([url]) => url.startsWith('/api/subscription/'))
+    ).toEqual([])
+    expect(screen.getAllByText('$0.01')).toHaveLength(2)
+    expect(
+      screen.queryByRole('img', { name: 'Wallet' })
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Subscription' })).toBeVisible()
+    if (role === ROLE.ADMIN) {
+      await userEvent
+        .setup()
+        .click(screen.getByRole('button', { name: 'Switch scope' }))
+      await waitFor(() => expect(client.isFetching()).toBe(0))
+    }
+    expect(
+      vi
+        .mocked(api.get)
+        .mock.calls.filter(([url]) => url.startsWith('/api/subscription/'))
+    ).toEqual([])
+  }
+)

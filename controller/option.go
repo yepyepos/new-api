@@ -14,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
+	"github.com/QuantumNous/new-api/setting/config"
 	"github.com/QuantumNous/new-api/setting/console_setting"
 	"github.com/QuantumNous/new-api/setting/model_setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
@@ -213,6 +214,28 @@ func UpdateOption(c *gin.Context) {
 	}
 	if option.Key == "TaskPublicAddress" && option.Value.(string) != "" {
 		if err := service.ValidateTaskArtifactBaseURL(option.Value.(string)); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	}
+	if strings.HasPrefix(option.Key, "discord.") {
+		settings := system_setting.DiscordSettingsSnapshot()
+		if err := config.UpdateConfigFromMap(&settings, map[string]string{strings.TrimPrefix(option.Key, "discord."): option.Value.(string)}); err != nil {
+			common.ApiErrorT(c, "Invalid parameters")
+			return
+		}
+		if err := settings.Validate(); err != nil {
+			common.ApiErrorT(c, err.Error())
+			return
+		}
+	}
+	if strings.HasPrefix(option.Key, "checkin_setting.") {
+		settings := operation_setting.CheckinSettingsSnapshot()
+		if err := config.UpdateConfigFromMap(&settings, map[string]string{strings.TrimPrefix(option.Key, "checkin_setting."): option.Value.(string)}); err != nil {
+			common.ApiErrorT(c, "Invalid parameters")
+			return
+		}
+		if err := settings.Validate(); err != nil {
 			common.ApiError(c, err)
 			return
 		}

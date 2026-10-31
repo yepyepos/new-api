@@ -1,0 +1,425 @@
+.nailong-preview {
+  --n-ink: #51432c;
+  --n-muted: #7d7059;
+  --n-line: #c8b27555;
+  --background: #fffdf5;
+  --foreground: #51432c;
+  --muted-foreground: #7d7059;
+  --border: #daca9e;
+  --ring: #99782d;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  isolation: isolate;
+  color: var(--n-ink);
+  background: #f6e7bc;
+  font-family: 'Public Sans Variable', 'Microsoft YaHei', sans-serif;
+}
+.nailong-preview::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(#fff7db12, #fff9e61c),
+    url('./assets/nailong-meadow.png') center / cover no-repeat;
+}
+.nailong-auth [data-provider='discord'] {
+  min-height: 45px;
+  border-radius: 12px;
+  background: #efc65b;
+  color: #51401a;
+  border-color: #dcb047;
+  font-weight: 650;
+  box-shadow: 0 3px 0 #d8b0554a;
+}
+.nailong-auth [data-provider='discord']:hover:not(:disabled) {
+  background: #f4d175;
+}
+.nailong-auth .nailong-card {
+  --primary: #795718;
+  --primary-foreground: #fffdf5;
+  --muted: #eee5d0;
+  --input: #daca9e;
+  --accent: #f1e5c3;
+  --accent-foreground: #51432c;
+  --card: #fffdf5;
+}
+.nailong-preview::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: #fffae909;
+  pointer-events: none;
+  z-index: -1;
+}
+body:has(.nailong-preview) .tsqd-open-btn-container,
+body:has(.nailong-preview) .TanStackRouterDevtools {
+  display: none;
+}
+.nailong-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 38px;
+}
+.nailong-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 1px 12px #fff8;
+}
+.nailong-brand img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  padding: 6px;
+  background: #fff9;
+  border: 1px solid #fffc;
+}
+.nailong-brand span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.nailong-brand strong {
+  font-size: 17px;
+  font-weight: 650;
+}
+.nailong-brand small {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+.nailong-home {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: #fff9;
+  border: 1px solid #fff9;
+  border-radius: 30px;
+  font-size: 11px;
+  backdrop-filter: blur(8px);
+}
+.nailong-home svg {
+  width: 13px;
+  height: 13px;
+}
+.nailong-main {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  padding: 36px 20px 48px;
+}
+.nailong-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 28px 32px 23px;
+  border: 1px solid #ffffffe0;
+  border-top: 3px solid #e7b448;
+  border-radius: 25px;
+  background: #fffdf2db;
+  backdrop-filter: blur(22px);
+  box-shadow:
+    0 20px 80px #6e4a1725,
+    inset 0 1px 0 #fff;
+  animation: nailong-arrive 0.6s ease both;
+}
+.nailong-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+  color: #876b32;
+  letter-spacing: 0.03em;
+}
+.nailong-card-top span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e4ca8a;
+  border-radius: 20px;
+  padding: 4px 8px;
+  background: #f6e9b580;
+}
+.nailong-card-top svg {
+  width: 12px;
+  height: 12px;
+}
+.nailong-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 0 18px;
+}
+.nailong-heading p {
+  font-family: Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  color: var(--n-muted);
+  margin-bottom: 7px;
+}
+.nailong-heading h1 {
+  font-family: 'Lora Variable', 'STKaiti', 'KaiTi', serif;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+.nailong-flower {
+  width: 53px;
+  height: 53px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: #f7e5a580;
+  transform: rotate(12deg);
+}
+.nailong-flower svg {
+  width: 32px;
+  height: 32px;
+  color: #ba8835;
+  stroke-width: 1.1;
+}
+.nailong-mood {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 22px;
+  background: #f1e5c578;
+  padding: 8px 11px;
+  border-radius: 30px;
+  color: #876b32;
+  font-size: 10px;
+}
+.nailong-mood span {
+  color: #b08a32;
+}
+.nailong-card .nailong-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  height: 42px;
+  padding: 4px;
+  border-radius: 13px;
+  background: #e9dfc975;
+}
+.nailong-tabs [data-slot='tabs-trigger'] {
+  border-radius: 10px;
+  color: #7d7059;
+  font-size: 12px;
+}
+.nailong-tabs [data-active] {
+  background: #fffdf5;
+  color: #805a20;
+  box-shadow: 0 2px 6px #71571e0a;
+  border-color: #fffc;
+}
+.nailong-panel {
+  padding-top: 22px;
+  min-height: 242px;
+}
+.nailong-welcome {
+  margin-bottom: 22px;
+}
+.nailong-welcome h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 7px;
+  letter-spacing: -0.02em;
+}
+.nailong-welcome h2 svg {
+  width: 19px;
+  height: 19px;
+}
+.nailong-welcome p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--n-muted);
+}
+.nailong-card .nailong-discord {
+  width: 100%;
+  height: 45px;
+  border-radius: 12px;
+  background: #efc65b;
+  color: #51401a;
+  border: 1px solid #dcb047;
+  box-shadow: 0 3px 0 #d8b0554a;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 650;
+  padding: 0 14px;
+}
+.nailong-discord svg:last-child {
+  margin-left: auto;
+}
+.nailong-discord svg:first-child {
+  margin-right: auto;
+}
+.nailong-card .nailong-discord:hover:not(:disabled) {
+  background: #f4d175;
+}
+.nailong-check {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--n-muted);
+  line-height: 1.8;
+  margin-top: 14px;
+}
+.nailong-check svg {
+  width: 13px;
+  height: 13px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.nailong-divider {
+  border-top: 1px dashed var(--n-line);
+  margin: 20px 0 16px;
+}
+.nailong-help {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--n-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.nailong-help svg {
+  width: 13px;
+  height: 13px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.nailong-admin {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: #7a5b26;
+}
+.nailong-admin svg {
+  width: 12px;
+  height: 12px;
+}
+.nailong-code-form {
+  display: grid;
+  gap: 12px;
+}
+.nailong-code-form label {
+  color: #655232;
+  font-size: 12px;
+}
+.nailong-code-form input {
+  height: 42px;
+  background: #ffffff60;
+  border-radius: 10px;
+  border-color: #dbc795;
+  color: var(--n-ink);
+  font-size: 12px;
+}
+.nailong-code-form .nailong-discord {
+  margin-top: 3px;
+}
+.nailong-preview-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--n-line);
+  font-size: 10px;
+  color: #796442;
+  line-height: 1.8;
+}
+.nailong-preview-note svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.nailong-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 15px 38px 24px;
+  font-size: 10px;
+  color: #51432c;
+  text-shadow: 0 1px 5px #fff;
+}
+@keyframes nailong-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nailong-card {
+    animation: none;
+  }
+}
+@media (max-width: 600px) {
+  .nailong-header {
+    padding: 20px;
+  }
+  .nailong-brand strong {
+    font-size: 15px;
+  }
+  .nailong-brand small {
+    font-size: 9px;
+  }
+  .nailong-brand img {
+    width: 32px;
+    height: 32px;
+  }
+  .nailong-home {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+  .nailong-main {
+    padding: 24px 18px 32px;
+  }
+  .nailong-card {
+    padding: 24px;
+    border-radius: 22px;
+    background: #fffdf2e8;
+  }
+  .nailong-heading h1 {
+    font-size: 30px;
+  }
+  .nailong-flower {
+    width: 43px;
+    height: 43px;
+  }
+  .nailong-mood {
+    font-size: 9px;
+    gap: 6px;
+  }
+  .nailong-footer {
+    padding: 14px 20px 20px;
+    font-size: 9px;
+  }
+  .nailong-preview::before {
+    background-position: 28% center;
+  }
+  .nailong-preview::after {
+    background: #fff4cd2e;
+  }
+}

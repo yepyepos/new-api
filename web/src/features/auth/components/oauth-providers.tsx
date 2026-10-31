@@ -39,6 +39,8 @@ type OAuthProvidersProps = {
   onWeChatLogin?: () => void
   isWeChatLoading?: boolean
   redirectTo?: string
+  registrationInviteCode?: string
+  discordOnly?: boolean
 }
 
 type ProviderButton = {
@@ -56,6 +58,8 @@ export function OAuthProviders({
   onWeChatLogin,
   isWeChatLoading = false,
   redirectTo,
+  registrationInviteCode,
+  discordOnly = false,
 }: OAuthProvidersProps) {
   const { t } = useTranslation()
   const {
@@ -68,11 +72,11 @@ export function OAuthProviders({
     handleLinuxDOLogin,
     handleTelegramLogin,
     handleCustomOAuthLogin,
-  } = useOAuthLogin(status, redirectTo)
+  } = useOAuthLogin(status, redirectTo, registrationInviteCode)
 
   const providerButtons: ProviderButton[] = []
 
-  if (status?.wechat_login && onWeChatLogin) {
+  if (!discordOnly && status?.wechat_login && onWeChatLogin) {
     providerButtons.push({
       key: 'wechat',
       label: t('Continue with WeChat'),
@@ -82,7 +86,7 @@ export function OAuthProviders({
     })
   }
 
-  if (status?.github_oauth) {
+  if (!discordOnly && status?.github_oauth) {
     providerButtons.push({
       key: 'github',
       label: githubButtonText || t('Continue with GitHub'),
@@ -101,7 +105,7 @@ export function OAuthProviders({
     })
   }
 
-  if (status?.oidc_enabled) {
+  if (!discordOnly && status?.oidc_enabled) {
     const oidcDisplayName = status.oidc_display_name?.trim() || 'OIDC'
     providerButtons.push({
       key: 'oidc',
@@ -112,7 +116,7 @@ export function OAuthProviders({
     })
   }
 
-  if (status?.linuxdo_oauth) {
+  if (!discordOnly && status?.linuxdo_oauth) {
     providerButtons.push({
       key: 'linuxdo',
       label: t('Continue with LinuxDO'),
@@ -121,7 +125,7 @@ export function OAuthProviders({
     })
   }
 
-  if (status?.telegram_oauth) {
+  if (!discordOnly && status?.telegram_oauth) {
     providerButtons.push({
       key: 'telegram',
       label: t('Continue with Telegram'),
@@ -131,7 +135,9 @@ export function OAuthProviders({
   }
 
   // Custom OAuth providers
-  const customProviders = status?.custom_oauth_providers
+  const customProviders = discordOnly
+    ? undefined
+    : status?.custom_oauth_providers
   if (customProviders && customProviders.length > 0) {
     for (const provider of customProviders) {
       providerButtons.push({
@@ -162,13 +168,14 @@ export function OAuthProviders({
           ({ key, label, onClick, icon, disabled: extraDisabled }) => (
             <Button
               key={key}
+              data-provider={key}
               variant='outline'
               type='button'
               disabled={disabled || isLoading || extraDisabled}
               onClick={onClick}
               className='h-11 w-full justify-center gap-2 rounded-lg'
             >
-              {icon}
+              {icon && <span aria-hidden='true'>{icon}</span>}
               {label}
             </Button>
           )

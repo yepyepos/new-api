@@ -5,6 +5,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/system_setting"
 	"gorm.io/gorm"
 )
 
@@ -52,6 +53,9 @@ func StartLoginVerification(user *model.User, loginMethod string, migration *Leg
 	}
 	if state.Status != common.UserStatusEnabled || state.AuthVersion != user.AuthVersion {
 		return nil, model.ErrUserSessionInactive
+	}
+	if err := RequireDiscordLogin(state.Role, loginMethod); err != nil {
+		return nil, err
 	}
 	methods, err := securityVerificationPolicy(VerificationScopeLogin, *state)
 	if err != nil || len(methods) == 0 {
@@ -103,6 +107,9 @@ func RequireLoginVerification(token, method string) (*LoginVerification, error) 
 	}
 	if state.Status != common.UserStatusEnabled || state.AuthVersion != payload.AuthVersion {
 		return nil, model.ErrUserSessionInactive
+	}
+	if err := RequireDiscordLogin(state.Role, payload.LoginMethod); err != nil {
+		return nil, err
 	}
 	if err := requireLoginVerificationMethod(state, method); err != nil {
 		return nil, err
@@ -164,6 +171,9 @@ func CompleteLoginVerification(token string, verification *LoginVerification, me
 		if err := requireLoginVerificationMethod(state, method); err != nil {
 			return err
 		}
+		if err := RequireDiscordLogin(state.Role, payload.LoginMethod); err != nil {
+			return err
+		}
 		if payload.PendingGitHubID == "" {
 			return nil
 		}
@@ -186,4 +196,13 @@ func CompleteLoginVerification(token string, verification *LoginVerification, me
 		return nil, nil, err
 	}
 	return bundle, migration, nil
+}
+
+// RequireDiscordLogin also protects alternate login methods and pending MFA flows.
+// Administrators retain their configured recovery login methods.
+func RequireDiscordLogin(role int, loginMethod string) error {
+	if system_setting.DiscordSettingsSnapshot().OnlyLogin && role < common.RoleAdminUser && loginMethod != "oauth:discord" {
+		return ErrDiscordLoginRequired
+	}
+	return nil
 }

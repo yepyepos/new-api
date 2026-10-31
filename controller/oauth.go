@@ -1,8 +1,11 @@
 package controller
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
@@ -22,19 +25,22 @@ import (
 const oauthAuthFlowTTL = 10 * time.Minute
 
 type oauthStateRequest struct {
-	Provider string          `json:"provider"`
-	Intent   string          `json:"intent"`
-	Aff      string          `json:"aff,omitempty"`
-	Scope    string          `json:"scope,omitempty"`
-	Context  json.RawMessage `json:"context,omitempty"`
+	Provider   string          `json:"provider"`
+	Intent     string          `json:"intent"`
+	Aff        string          `json:"aff,omitempty"`
+	InviteCode string          `json:"invite_code,omitempty"`
+	Scope      string          `json:"scope,omitempty"`
+	Context    json.RawMessage `json:"context,omitempty"`
 }
 
 type oauthFlowPayload struct {
-	AffiliateCode   string                         `json:"affiliate_code,omitempty"`
-	Verification    *service.OAuthVerificationFlow `json:"verification,omitempty"`
-	Telegram        *oauth.TelegramOAuthFlow       `json:"telegram,omitempty"`
-	SessionIdentity *service.AuthIdentity          `json:"session_identity,omitempty"`
-	Authorization   *model.AuthFlowAuthorization   `json:"authorization,omitempty"`
+	DiscordBrowserHash     string                         `json:"discord_browser_hash,omitempty"`
+	AffiliateCode          string                         `json:"affiliate_code,omitempty"`
+	RegistrationInviteHash string                         `json:"registration_invite_hash,omitempty"`
+	Verification           *service.OAuthVerificationFlow `json:"verification,omitempty"`
+	Telegram               *oauth.TelegramOAuthFlow       `json:"telegram,omitempty"`
+	SessionIdentity        *service.AuthIdentity          `json:"session_identity,omitempty"`
+	Authorization          *model.AuthFlowAuthorization   `json:"authorization,omitempty"`
 }
 
 // providerParams returns the params of messages that name the OAuth provider.
@@ -44,6 +50,7 @@ func providerParams(name string) map[string]any {
 
 // GenerateOAuthCode generates a state code for OAuth CSRF protection
 func GenerateOAuthCode(c *gin.Context) {
+	setAuthNoStore(c)
 	var request oauthStateRequest
 	if err := common.DecodeJson(c.Request.Body, &request); err != nil {
 		common.ApiErrorT(c, "Invalid parameters")
@@ -52,9 +59,11 @@ func GenerateOAuthCode(c *gin.Context) {
 	request.Provider = strings.TrimSpace(request.Provider)
 	request.Intent = strings.TrimSpace(request.Intent)
 	request.Aff = strings.TrimSpace(request.Aff)
+	request.InviteCode = strings.TrimSpace(request.InviteCode)
 	if oauth.GetProvider(request.Provider) == nil ||
 		(request.Intent != model.AuthFlowIntentLogin && request.Intent != model.AuthFlowIntentBind && request.Intent != model.AuthFlowIntentVerify) ||
-		len(request.Aff) > 32 ||
+		len(request.Aff) > 32 || len(request.InviteCode) > 128 ||
+		(request.InviteCode != "" && (request.Provider != "discord" || request.Intent != model.AuthFlowIntentLogin)) ||
 		(request.Intent != model.AuthFlowIntentLogin && request.Aff != "") ||
 		(request.Intent != model.AuthFlowIntentVerify && (request.Scope != "" || len(request.Context) != 0)) {
 		common.ApiErrorT(c, "Invalid parameters")
@@ -63,6 +72,23 @@ func GenerateOAuthCode(c *gin.Context) {
 	userID := 0
 	sessionID := ""
 	flowPayload := oauthFlowPayload{AffiliateCode: request.Aff}
+	if request.InviteCode != "" {
+		flowPayload.RegistrationInviteHash = model.HashRegistrationInvite(request.InviteCode)
+		if _, err := model.GetRegistrationInvite(flowPayload.RegistrationInviteHash); err != nil {
+			writeSecurityOperationError(c, err)
+			return
+		}
+	}
+	discordBrowserNonce := ""
+	if request.Provider == "discord" {
+		var err error
+		discordBrowserNonce, err = common.GenerateRandomCharsKey(64)
+		if err != nil {
+			writeSecurityOperationError(c, err)
+			return
+		}
+		flowPayload.DiscordBrowserHash = fmt.Sprintf("%x", sha256.Sum256([]byte(discordBrowserNonce)))
+	}
 	bindingStarted := false
 	if request.Provider == "telegram" {
 		telegramFlow, err := oauth.NewTelegramOAuthFlow()
@@ -131,7 +157,17 @@ func GenerateOAuthCode(c *gin.Context) {
 		return
 	}
 	bindingStarted = request.Intent == model.AuthFlowIntentBind
+	if discordBrowserNonce != "" {
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name: discordOAuthCookieName(state), Value: discordBrowserNonce,
+			Path: "/api/oauth/discord", MaxAge: int(oauthAuthFlowTTL.Seconds()),
+			HttpOnly: true, Secure: common.SessionCookieSecure, SameSite: http.SameSiteLaxMode,
+		})
+	}
 	data := gin.H{"flow_token": state, "expires_at": expiresAt.Unix()}
+	if discordBrowserNonce != "" {
+		data["authorization_url"] = (&oauth.DiscordProvider{}).AuthorizationURL(state, discordBrowserNonce)
+	}
 	if flowPayload.Telegram != nil {
 		data["authorization_url"] = flowPayload.Telegram.AuthorizationURL(state)
 	}
@@ -144,6 +180,7 @@ func GenerateOAuthCode(c *gin.Context) {
 
 // HandleOAuth handles OAuth callback for all standard OAuth providers
 func HandleOAuth(c *gin.Context) {
+	setAuthNoStore(c)
 	providerName := c.Param("provider")
 	provider := oauth.GetProvider(providerName)
 	if provider == nil {
@@ -160,6 +197,21 @@ func HandleOAuth(c *gin.Context) {
 	if err != nil {
 		writeAccountStatusError(c, http.StatusForbidden, "State parameter is empty or mismatched")
 		return
+	}
+	if providerName == "discord" {
+		var payload oauthFlowPayload
+		nonce, cookieErr := c.Cookie(discordOAuthCookieName(state))
+		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(nonce)))
+		if cookieErr != nil || nonce == "" || common.UnmarshalJsonStr(pendingFlow.Payload, &payload) != nil || payload.DiscordBrowserHash == "" ||
+			subtle.ConstantTimeCompare([]byte(hash), []byte(payload.DiscordBrowserHash)) != 1 {
+			writeAccountStatusError(c, http.StatusForbidden, "State parameter is empty or mismatched")
+			return
+		}
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name: discordOAuthCookieName(state), Path: "/api/oauth/discord", MaxAge: -1,
+			HttpOnly: true, Secure: common.SessionCookieSecure, SameSite: http.SameSiteLaxMode,
+		})
+		c.Set(oauth.DiscordCodeVerifierContextKey, nonce)
 	}
 
 	consumeMatch := model.AuthFlowMatch{
@@ -262,7 +314,20 @@ func HandleOAuth(c *gin.Context) {
 	}
 
 	// 6. Get user info
-	oauthUser, err := provider.GetUserInfo(c.Request.Context(), token)
+	infoContext := c.Request.Context()
+	if providerName == "discord" {
+		var payload oauthFlowPayload
+		if err := common.UnmarshalJsonStr(pendingFlow.Payload, &payload); err != nil {
+			writeSecurityOperationError(c, err)
+			return
+		}
+		inviteHash := ""
+		if pendingFlow.Intent == model.AuthFlowIntentLogin {
+			inviteHash = payload.RegistrationInviteHash
+		}
+		infoContext = oauth.WithDiscordRegistrationInvite(infoContext, inviteHash)
+	}
+	oauthUser, err := provider.GetUserInfo(infoContext, token)
 	if err != nil {
 		if providerName == "telegram" {
 			writeSecurityOperationError(c, err)
@@ -289,6 +354,11 @@ func HandleOAuth(c *gin.Context) {
 	}
 }
 
+// Each flow gets its own browser binding so concurrent login tabs do not collide.
+func discordOAuthCookieName(state string) string {
+	return fmt.Sprintf("discord_oauth_%x", sha256.Sum256([]byte(state)))
+}
+
 func handleOAuthVerification(c *gin.Context, provider string, oauthUser *oauth.OAuthUser, flow *model.AuthFlow) {
 	var payload oauthFlowPayload
 	if err := common.UnmarshalJsonStr(flow.Payload, &payload); err != nil {
@@ -312,7 +382,7 @@ func handleOAuthLogin(c *gin.Context, provider oauth.Provider, oauthUser *oauth.
 		writeSecurityOperationError(c, err)
 		return
 	}
-	user, migration, err := findOrCreateOAuthUser(c, provider, oauthUser, token, payload.AffiliateCode)
+	user, migration, err := findOrCreateOAuthUser(c, provider, oauthUser, token, payload.AffiliateCode, payload.RegistrationInviteHash)
 	if err != nil {
 		if errors.Is(err, model.ErrEmailAlreadyTaken) {
 			common.ApiErrorT(c, "Email address is already in use")
@@ -396,7 +466,11 @@ func handleOAuthBind(c *gin.Context, providerName string, provider oauth.Provide
 // findOrCreateOAuthUser finds the existing user or creates a new one. For a
 // legacy GitHub binding that still waits for the login verification, it also
 // returns the rewrite to carry into the challenge.
-func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *oauth.OAuthUser, token *oauth.OAuthToken, affiliateCode string) (*model.User, *service.LegacyGitHubMigration, error) {
+func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *oauth.OAuthUser, token *oauth.OAuthToken, affiliateCode string, inviteHashes ...string) (*model.User, *service.LegacyGitHubMigration, error) {
+	inviteHash := ""
+	if c.Param("provider") == "discord" && len(inviteHashes) > 0 {
+		inviteHash = inviteHashes[0]
+	}
 	user := &model.User{}
 	if provider.ProviderUserIDColumn() == "telegram_id" {
 		err := provider.FillUserByProviderID(user, oauthUser.ProviderUserID)
@@ -476,7 +550,10 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 	}
 
 	// User doesn't exist, create new user if registration is enabled
-	if !common.RegisterEnabled {
+	if err := service.RequireDiscordLogin(common.RoleCommonUser, "oauth:"+c.Param("provider")); err != nil {
+		return nil, nil, err
+	}
+	if !common.RegisterEnabled && inviteHash == "" {
 		return nil, nil, &OAuthRegistrationDisabledError{}
 	}
 
@@ -522,7 +599,7 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 		// Custom provider: create user and binding in a transaction
 		err := model.DB.Transaction(func(tx *gorm.DB) error {
 			// Create user
-			if err := user.InsertWithTx(tx, inviterId); err != nil {
+			if err := user.RegisterWithTx(tx, inviterId, inviteHash); err != nil {
 				return err
 			}
 
@@ -548,7 +625,7 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 		// Built-in provider: create user and update provider ID in a transaction
 		err := model.DB.Transaction(func(tx *gorm.DB) error {
 			// Create user
-			if err := user.InsertWithTx(tx, inviterId); err != nil {
+			if err := user.RegisterWithTx(tx, inviterId, inviteHash); err != nil {
 				return err
 			}
 

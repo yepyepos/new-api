@@ -37,6 +37,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { handleServerError } from '@/lib/handle-server-error'
@@ -70,6 +72,11 @@ const oauthSchema = z.object({
     enabled: z.boolean(),
     client_id: z.string(),
     client_secret: z.string(),
+    guild_id: z.string(),
+    role_ids: z.string(),
+    role_match_mode: z.enum(['any', 'all']),
+    only_login: z.boolean(),
+    blocked_guild_ids: z.string(),
   }),
   oidc: z.object({
     enabled: z.boolean(),
@@ -102,6 +109,11 @@ type FlatOAuthDefaults = {
   'discord.enabled': boolean
   'discord.client_id': string
   'discord.client_secret': string
+  'discord.guild_id': string
+  'discord.role_ids': string
+  'discord.role_match_mode': 'any' | 'all'
+  'discord.only_login': boolean
+  'discord.blocked_guild_ids': string
   'oidc.enabled': boolean
   'oidc.display_name': string
   'oidc.client_id': string
@@ -183,6 +195,11 @@ const buildFormDefaults = (defaults: FlatOAuthDefaults): OAuthFormValues => ({
     enabled: defaults['discord.enabled'],
     client_id: defaults['discord.client_id'] ?? '',
     client_secret: defaults['discord.client_secret'] ?? '',
+    guild_id: defaults['discord.guild_id'] ?? '',
+    role_ids: defaults['discord.role_ids'] ?? '',
+    role_match_mode: defaults['discord.role_match_mode'] || 'any',
+    only_login: defaults['discord.only_login'] ?? false,
+    blocked_guild_ids: defaults['discord.blocked_guild_ids'] ?? '',
   },
   oidc: {
     enabled: defaults['oidc.enabled'],
@@ -216,6 +233,11 @@ const normalizeFormValues = (values: OAuthFormValues): FlatOAuthDefaults => ({
   'discord.enabled': values.discord.enabled,
   'discord.client_id': values.discord.client_id,
   'discord.client_secret': values.discord.client_secret,
+  'discord.guild_id': values.discord.guild_id.trim(),
+  'discord.role_ids': values.discord.role_ids.trim(),
+  'discord.role_match_mode': values.discord.role_match_mode,
+  'discord.only_login': values.discord.only_login,
+  'discord.blocked_guild_ids': values.discord.blocked_guild_ids.trim(),
   'oidc.enabled': values.oidc.enabled,
   'oidc.display_name': values.oidc.display_name,
   'oidc.client_id': values.oidc.client_id,
@@ -297,6 +319,42 @@ export function OAuthSection(props: OAuthSectionProps) {
   }, [props.defaultValues, form])
 
   const onSubmit = async (values: OAuthFormValues) => {
+    const guildId = values.discord.guild_id.trim()
+    const roleIds = values.discord.role_ids
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean)
+    if (roleIds.length > 0 && !guildId) {
+      setActiveTab('discord')
+      form.setError('discord.guild_id', {
+        message: t('Specify a Discord server before restricting roles.'),
+      })
+      return
+    }
+    for (const [field, ids] of [
+      ['guild_id', guildId ? [guildId] : []],
+      ['role_ids', roleIds],
+    ] as const) {
+      if (
+        ids.some(
+          (id) =>
+            !/^[1-9]\d{0,19}$/.test(id) || BigInt(id) > 18446744073709551615n
+        )
+      ) {
+        setActiveTab('discord')
+        form.setError(`discord.${field}`, {
+          message: t('Enter a valid numeric Discord ID.'),
+        })
+        return
+      }
+    }
+    if (values.discord.only_login && !values.discord.enabled) {
+      setActiveTab('discord')
+      form.setError('discord.only_login', {
+        message: t('Enable Discord OAuth before requiring Discord login.'),
+      })
+      return
+    }
     let finalValues = values
     const wellKnown = values.oidc.well_known.trim()
     const discoveryUrlChanged =
@@ -361,6 +419,15 @@ export function OAuthSection(props: OAuthSectionProps) {
       return
     }
 
+    // Save prerequisites before enabling restrictions; remove restrictions first.
+    const discordSavePriority = (key: keyof FlatOAuthDefaults): number => {
+      if (key === 'discord.only_login') return normalized[key] ? 50 : -20
+      if (key === 'discord.role_ids' && !normalized[key]) return -10
+      if (key === 'discord.guild_id' && !normalized[key]) return 30
+      if (key === 'discord.enabled') return 40
+      return 0
+    }
+    changedKeys.sort((a, b) => discordSavePriority(a) - discordSavePriority(b))
     for (const key of changedKeys) {
       await updateOption.mutateAsync({
         key,
@@ -583,6 +650,180 @@ export function OAuthSection(props: OAuthSectionProps) {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name='discord.guild_id'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Required Discord server ID')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode='numeric'
+                          autoComplete='off'
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Leave empty to allow any Discord account. No server administrator access or bot is needed.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='discord.role_ids'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t('Allowed Discord role IDs (optional)')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} autoComplete='off' />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Separate role IDs with commas. Leave empty to allow all server members.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='discord.role_match_mode'
+                  render={({ field }) => (
+                    <FormItem className='lg:col-span-2'>
+                      <FormLabel>{t('Discord role matching')}</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={form.formState.isSubmitting}
+                          aria-label={t('Discord role matching')}
+                          className='grid-cols-1 gap-3 sm:grid-cols-2'
+                        >
+                          <Label
+                            htmlFor='discord-role-match-any'
+                            data-selected={field.value === 'any'}
+                            className='data-[selected=true]:border-primary data-[selected=true]:bg-primary/5 flex min-w-0 cursor-pointer items-start gap-3 rounded-lg border p-4'
+                          >
+                            <RadioGroupItem
+                              value='any'
+                              id='discord-role-match-any'
+                              aria-labelledby='discord-role-match-any-title'
+                              aria-describedby='discord-role-match-any-description'
+                            />
+                            <span className='min-w-0 space-y-1.5'>
+                              <span
+                                id='discord-role-match-any-title'
+                                className='block'
+                              >
+                                {t('Match any role')}
+                              </span>
+                              <span
+                                id='discord-role-match-any-description'
+                                className='text-muted-foreground block text-xs leading-relaxed font-normal'
+                              >
+                                {t('Any one of the listed roles is enough.')}
+                              </span>
+                            </span>
+                          </Label>
+                          <Label
+                            htmlFor='discord-role-match-all'
+                            data-selected={field.value === 'all'}
+                            className='data-[selected=true]:border-primary data-[selected=true]:bg-primary/5 flex min-w-0 cursor-pointer items-start gap-3 rounded-lg border p-4'
+                          >
+                            <RadioGroupItem
+                              value='all'
+                              id='discord-role-match-all'
+                              aria-labelledby='discord-role-match-all-title'
+                              aria-describedby='discord-role-match-all-description'
+                            />
+                            <span className='min-w-0 space-y-1.5'>
+                              <span
+                                id='discord-role-match-all-title'
+                                className='block'
+                              >
+                                {t('Match all roles')}
+                              </span>
+                              <span
+                                id='discord-role-match-all-description'
+                                className='text-muted-foreground block text-xs leading-relaxed font-normal'
+                              >
+                                {t('Every listed role is required.')}
+                              </span>
+                            </span>
+                          </Label>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'When role IDs are empty, only server membership is checked.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='discord.blocked_guild_ids'
+                  render={({ field }) => (
+                    <FormItem className='lg:col-span-2'>
+                      <FormLabel>{t('Blocked Discord server IDs')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} autoComplete='off' />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Separate server IDs with commas. Members are denied at login and registration, including exempt invitations. Existing sessions are not monitored.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='discord.only_login'
+                  render={({ field }) => (
+                    <SettingsSwitchItem>
+                      <SettingsSwitchContent>
+                        <FormLabel>
+                          {t('Require Discord login for regular users')}
+                        </FormLabel>
+                        <FormDescription>
+                          {t(
+                            'Blocks other sign-in and registration methods for regular users. Administrators keep their existing sign-in methods.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </SettingsSwitchContent>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </SettingsSwitchItem>
+                  )}
+                />
+                <Alert className='lg:col-span-2'>
+                  <AlertDescription>
+                    {t(
+                      'Membership is checked at Discord sign-in, account linking and security verification, not continuously for existing sessions or API keys.'
+                    )}
+                  </AlertDescription>
+                </Alert>
               </TabsContent>
 
               <TabsContent value='oidc' className={oauthTabContentClassName}>

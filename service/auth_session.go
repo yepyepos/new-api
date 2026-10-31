@@ -28,6 +28,7 @@ var (
 	ErrLoginSessionMismatch = errors.New("login session does not match the expected session")
 	ErrRefreshTokenInvalid  = errors.New("refresh token is invalid")
 	ErrRefreshRace          = errors.New("refresh token was already rotated")
+	ErrDiscordLoginRequired = errors.New("Please sign in with Discord. Other sign-in methods are reserved for administrators.")
 )
 
 type LoginSessionView struct {
@@ -70,6 +71,9 @@ func createLoginSession(userID int, expectedAuthVersion int64, loginMethod, ip, 
 	}
 	if expectedAuthVersion > 0 && user.AuthVersion != expectedAuthVersion {
 		return nil, ErrLoginSessionRevoked
+	}
+	if err := RequireDiscordLogin(user.Role, loginMethod); err != nil {
+		return nil, err
 	}
 	now := time.Now().Unix()
 	activeCount, err := model.CountActiveUserSessions(userID, now)
@@ -462,6 +466,8 @@ func truncateAuthMetadata(value string, max int) string {
 
 func authSessionErrorCode(err error) (int, string) {
 	switch {
+	case errors.Is(err, ErrDiscordLoginRequired):
+		return http.StatusForbidden, "DISCORD_LOGIN_REQUIRED"
 	case errors.Is(err, model.ErrUserSessionLimit):
 		return http.StatusConflict, "AUTH_SESSION_LIMIT"
 	case errors.Is(err, model.ErrUserSessionIssuanceLimit):

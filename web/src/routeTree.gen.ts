@@ -31,6 +31,9 @@ import { Route as AuthenticatedSystemSettingsRouteRouteImport } from './routes/_
 import { Route as AboutIndexRouteImport } from './routes/about/index'
 import { Route as OauthProviderRouteImport } from './routes/oauth/$provider'
 import { Route as PricingIndexRouteImport } from './routes/pricing/index'
+import { Route as PrototypeNailongRouteImport } from './routes/prototype/nailong'
+import { Route as PrototypeNailongHomeRouteImport } from './routes/prototype/nailong-home'
+import { Route as PrototypeSignInRouteImport } from './routes/prototype/sign-in'
 import { Route as RankingsIndexRouteImport } from './routes/rankings/index'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as authUserResetRouteImport } from './routes/(auth)/user/reset'
@@ -180,6 +183,21 @@ const OauthProviderRoute = OauthProviderRouteImport.update({
 const PricingIndexRoute = PricingIndexRouteImport.update({
   id: '/pricing/',
   path: '/pricing/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrototypeNailongRoute = PrototypeNailongRouteImport.update({
+  id: '/prototype/nailong',
+  path: '/prototype/nailong',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrototypeNailongHomeRoute = PrototypeNailongHomeRouteImport.update({
+  id: '/prototype/nailong-home',
+  path: '/prototype/nailong-home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrototypeSignInRoute = PrototypeSignInRouteImport.update({
+  id: '/prototype/sign-in',
+  path: '/prototype/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RankingsIndexRoute = RankingsIndexRouteImport.update({
@@ -441,6 +459,9 @@ export interface FileRoutesByFullPath {
   '/503': typeof errors503Route
   '/chat2link': typeof AuthenticatedChat2linkRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/prototype/nailong': typeof PrototypeNailongRoute
+  '/prototype/nailong-home': typeof PrototypeNailongHomeRoute
+  '/prototype/sign-in': typeof PrototypeSignInRoute
   '/about/': typeof AboutIndexRoute
   '/pricing/': typeof PricingIndexRoute
   '/rankings/': typeof RankingsIndexRoute
@@ -503,6 +524,9 @@ export interface FileRoutesByTo {
   '/503': typeof errors503Route
   '/chat2link': typeof AuthenticatedChat2linkRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/prototype/nailong': typeof PrototypeNailongRoute
+  '/prototype/nailong-home': typeof PrototypeNailongHomeRoute
+  '/prototype/sign-in': typeof PrototypeSignInRoute
   '/about': typeof AboutIndexRoute
   '/pricing': typeof PricingIndexRoute
   '/rankings': typeof RankingsIndexRoute
@@ -569,6 +593,9 @@ export interface FileRoutesById {
   '/(errors)/503': typeof errors503Route
   '/_authenticated/chat2link': typeof AuthenticatedChat2linkRoute
   '/oauth/$provider': typeof OauthProviderRoute
+  '/prototype/nailong': typeof PrototypeNailongRoute
+  '/prototype/nailong-home': typeof PrototypeNailongHomeRoute
+  '/prototype/sign-in': typeof PrototypeSignInRoute
   '/about/': typeof AboutIndexRoute
   '/pricing/': typeof PricingIndexRoute
   '/rankings/': typeof RankingsIndexRoute
@@ -634,6 +661,9 @@ export interface FileRouteTypes {
     | '/503'
     | '/chat2link'
     | '/oauth/$provider'
+    | '/prototype/nailong'
+    | '/prototype/nailong-home'
+    | '/prototype/sign-in'
     | '/about/'
     | '/pricing/'
     | '/rankings/'
@@ -696,6 +726,9 @@ export interface FileRouteTypes {
     | '/503'
     | '/chat2link'
     | '/oauth/$provider'
+    | '/prototype/nailong'
+    | '/prototype/nailong-home'
+    | '/prototype/sign-in'
     | '/about'
     | '/pricing'
     | '/rankings'
@@ -761,6 +794,9 @@ export interface FileRouteTypes {
     | '/(errors)/503'
     | '/_authenticated/chat2link'
     | '/oauth/$provider'
+    | '/prototype/nailong'
+    | '/prototype/nailong-home'
+    | '/prototype/sign-in'
     | '/about/'
     | '/pricing/'
     | '/rankings/'
@@ -818,6 +854,9 @@ export interface RootRouteChildren {
   errors500Route: typeof errors500Route
   errors503Route: typeof errors503Route
   OauthProviderRoute: typeof OauthProviderRoute
+  PrototypeNailongRoute: typeof PrototypeNailongRoute
+  PrototypeNailongHomeRoute: typeof PrototypeNailongHomeRoute
+  PrototypeSignInRoute: typeof PrototypeSignInRoute
   AboutIndexRoute: typeof AboutIndexRoute
   PricingIndexRoute: typeof PricingIndexRoute
   RankingsIndexRoute: typeof RankingsIndexRoute
@@ -979,6 +1018,27 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing/'
       preLoaderRoute: typeof PricingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype/nailong': {
+      id: '/prototype/nailong'
+      path: '/prototype/nailong'
+      fullPath: '/prototype/nailong'
+      preLoaderRoute: typeof PrototypeNailongRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype/nailong-home': {
+      id: '/prototype/nailong-home'
+      path: '/prototype/nailong-home'
+      fullPath: '/prototype/nailong-home'
+      preLoaderRoute: typeof PrototypeNailongHomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype/sign-in': {
+      id: '/prototype/sign-in'
+      path: '/prototype/sign-in'
+      fullPath: '/prototype/sign-in'
+      preLoaderRoute: typeof PrototypeSignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rankings/': {
@@ -1427,6 +1487,9 @@ const rootRouteChildren: RootRouteChildren = {
   errors500Route: errors500Route,
   errors503Route: errors503Route,
   OauthProviderRoute: OauthProviderRoute,
+  PrototypeNailongRoute: PrototypeNailongRoute,
+  PrototypeNailongHomeRoute: PrototypeNailongHomeRoute,
+  PrototypeSignInRoute: PrototypeSignInRoute,
   AboutIndexRoute: AboutIndexRoute,
   PricingIndexRoute: PricingIndexRoute,
   RankingsIndexRoute: RankingsIndexRoute,

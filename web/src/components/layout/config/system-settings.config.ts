@@ -46,7 +46,10 @@ import type { NavGroup, SidebarView } from '../types'
  * header already provides top-level context — the inner group label
  * scopes the items as "administration" actions.
  */
-function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
+function getSystemSettingsNavGroups(
+  t: TFunction,
+  publicBenefitMode = false
+): NavGroup[] {
   return [
     {
       id: 'system-administration',
@@ -63,9 +66,15 @@ function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
           items: getAuthSectionNavItems(t),
         },
         {
-          title: t('Billing & Payment'),
+          title: publicBenefitMode
+            ? t('Quota & Usage')
+            : t('Billing & Payment'),
           icon: CreditCard,
-          items: getBillingSectionNavItems(t),
+          items: getBillingSectionNavItems(t).filter(
+            (item) =>
+              !publicBenefitMode ||
+              item.url !== '/system-settings/billing/payment'
+          ),
         },
         {
           title: t('Models'),

@@ -348,7 +348,11 @@ export function SummaryCards() {
           </div>
 
           <Button className='justify-between' render={<Link to='/wallet' />}>
-            <span>{t('Wallet')}</span>
+            <span>
+              {status?.public_benefit_mode_enabled
+                ? t('Quota Center')
+                : t('Wallet')}
+            </span>
             <ArrowRight data-icon='inline-end' />
           </Button>
         </div>

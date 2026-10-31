@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -11,6 +12,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -27,6 +30,7 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 )
 
@@ -112,6 +116,91 @@ func TestSecurityLoginCodeCompletesOnce(t *testing.T) {
 			require.NoError(t, err)
 			assert.EqualValues(t, 2, count)
 		})
+	}
+}
+
+func TestDiscordOnlyLoginRejectsPendingAlternativeMFA(t *testing.T) {
+	user, _ := setupSecurityEnrollmentTest(t)
+	settings := system_setting.GetDiscordSettings()
+	previous := *settings
+	settings.OnlyLogin = false
+	t.Cleanup(func() { *settings = previous })
+	factor := &model.TwoFA{UserId: user.Id, Secret: "JBSWY3DPEHPK3PXP", IsEnabled: true}
+	require.NoError(t, model.DB.Create(factor).Error)
+	challenge, err := service.StartLoginVerification(user, "password", nil)
+	require.NoError(t, err)
+	require.NotNil(t, challenge)
+	settings.OnlyLogin = true
+	code, err := totp.GenerateCode(factor.Secret, time.Now())
+	require.NoError(t, err)
+	body, err := common.Marshal(map[string]string{"flow_token": challenge.FlowToken, "code": code})
+	require.NoError(t, err)
+	response := securityEnrollmentRequest("POST", "/api/user/login/verify", string(body), "", service.AuthIdentity{}, VerifyLogin)
+	assert.Equal(t, http.StatusForbidden, response.Code)
+	assert.Contains(t, response.Body.String(), `"code":"DISCORD_LOGIN_REQUIRED"`)
+	assert.Empty(t, response.Header().Values("Set-Cookie"))
+	count, err := model.CountActiveUserSessions(user.Id, time.Now().Unix())
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, count, "the fixture's existing session is unchanged; no new session is issued")
+}
+
+func TestDiscordOAuthStateRequiresTheInitiatingBrowser(t *testing.T) {
+	setupSecurityEnrollmentTest(t)
+	settings := system_setting.GetDiscordSettings()
+	previous := *settings
+	*settings = system_setting.DiscordSettings{Enabled: true, ClientId: "test-client"}
+	t.Cleanup(func() { *settings = previous })
+	router := gin.New()
+	router.POST("/api/oauth/state", GenerateOAuthCode)
+	router.GET("/api/oauth/:provider", HandleOAuth)
+	start := httptest.NewRecorder()
+	router.ServeHTTP(start, httptest.NewRequest("POST", "/api/oauth/state", strings.NewReader(`{"provider":"discord","intent":"login"}`)))
+	var result struct {
+		Success bool `json:"success"`
+		Data    struct {
+			FlowToken        string `json:"flow_token"`
+			AuthorizationURL string `json:"authorization_url"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(start.Body.Bytes(), &result))
+	require.True(t, result.Success)
+	cookies := start.Result().Cookies()
+	require.Len(t, cookies, 1)
+	assert.True(t, cookies[0].HttpOnly)
+	assert.Equal(t, http.SameSiteLaxMode, cookies[0].SameSite)
+	assert.Equal(t, common.SessionCookieSecure, cookies[0].Secure)
+	assert.Equal(t, "no-store", start.Header().Get("Cache-Control"))
+	authorization, err := url.Parse(result.Data.AuthorizationURL)
+	require.NoError(t, err)
+	assert.Equal(t, "discord.com", authorization.Host)
+	assert.Equal(t, result.Data.FlowToken, authorization.Query().Get("state"))
+	assert.Equal(t, "S256", authorization.Query().Get("code_challenge_method"))
+	assert.Equal(t, oauth2.S256ChallengeFromVerifier(cookies[0].Value), authorization.Query().Get("code_challenge"))
+	assert.Equal(t, "identify", authorization.Query().Get("scope"))
+	assert.NotContains(t, result.Data.AuthorizationURL, cookies[0].Value)
+	flow, err := model.GetAuthFlow(result.Data.FlowToken, model.AuthFlowMatch{Purpose: model.AuthFlowPurposeOAuth, Provider: "discord"})
+	require.NoError(t, err)
+	assert.NotContains(t, flow.Payload, cookies[0].Value, "the browser secret is not stored in the flow")
+	url := "/api/oauth/discord?state=" + result.Data.FlowToken + "&error=access_denied"
+	for _, cookie := range []*http.Cookie{nil, {Name: cookies[0].Name, Value: "other-browser"}} {
+		request := httptest.NewRequest("GET", url, nil)
+		if cookie != nil {
+			request.AddCookie(cookie)
+		}
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusForbidden, response.Code)
+	}
+	for attempt := range 2 {
+		request := httptest.NewRequest("GET", url, nil)
+		request.AddCookie(cookies[0])
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		if attempt == 0 {
+			assert.Equal(t, http.StatusOK, response.Code, "the initiating browser may complete the cancellation")
+		} else {
+			assert.Equal(t, http.StatusForbidden, response.Code, "the same flow must not be replayable")
+		}
 	}
 }
 
@@ -659,8 +748,9 @@ func setupAuthFlowControllerTest(t *testing.T) *authFlowTestOAuthProvider {
 	previousType := common.MainDatabaseType()
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&model.AuthFlow{}, &model.User{}, &model.UserSession{}, &model.AuditLog{}))
+	require.NoError(t, db.AutoMigrate(&model.AuthFlow{}, &model.User{}, &model.UserSession{}, &model.AuditLog{}, &model.RegistrationInvite{}, &model.RegistrationAdmission{}, &model.RegistrationBatch{}))
 	model.DB, model.LOG_DB = db, db
+	require.NoError(t, model.InitializeRegistrationBatch())
 	common.SetMainDatabaseType(common.DatabaseTypeSQLite)
 	provider := &authFlowTestOAuthProvider{}
 	oauth.Register("auth-flow-test", provider)
@@ -700,6 +790,49 @@ func TestGenerateOAuthCodeCarriesAffiliateInLoginFlow(t *testing.T) {
 	assert.Equal(t, "invite-code", payload.AffiliateCode)
 	assert.Zero(t, flow.UserId)
 	assert.Empty(t, flow.SessionId)
+}
+
+func TestRegistrationInvitationIsBoundToDiscordLoginFlow(t *testing.T) {
+	setupAuthFlowControllerTest(t)
+	invite := &model.RegistrationInvite{Name: "community", MaxUses: 1, Exempt: true}
+	code, err := model.CreateRegistrationInvite(invite)
+	require.NoError(t, err)
+	for _, test := range []struct {
+		provider, intent, code string
+		valid                  bool
+	}{
+		{"discord", "login", code, true},
+		{"auth-flow-test", "login", code, false},
+		{"discord", "bind", code, false},
+		{"discord", "login", "affiliate-code", false},
+	} {
+		t.Run(test.provider+"/"+test.intent+"/"+strconv.FormatBool(test.valid), func(t *testing.T) {
+			body, err := common.Marshal(map[string]any{"provider": test.provider, "intent": test.intent, "invite_code": test.code})
+			require.NoError(t, err)
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Request = httptest.NewRequest(http.MethodPost, "/api/oauth/state", bytes.NewReader(body))
+			GenerateOAuthCode(c)
+			var result struct {
+				Success bool `json:"success"`
+				Data    struct {
+					Token string `json:"flow_token"`
+				} `json:"data"`
+			}
+			require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &result))
+			require.Equal(t, test.valid, result.Success)
+			if test.valid {
+				flow, err := model.GetAuthFlow(result.Data.Token, model.AuthFlowMatch{Purpose: model.AuthFlowPurposeOAuth, Provider: "discord", Intent: "login"})
+				require.NoError(t, err)
+				assert.NotContains(t, flow.Payload, code)
+				var payload oauthFlowPayload
+				require.NoError(t, common.UnmarshalJsonStr(flow.Payload, &payload))
+				assert.Equal(t, model.HashRegistrationInvite(code), payload.RegistrationInviteHash)
+			}
+		})
+	}
+	require.NoError(t, model.DB.First(invite, invite.ID).Error)
+	assert.Zero(t, invite.Used, "starting OAuth does not consume invitation capacity")
 }
 
 func TestGenerateOAuthCodeBindsFlowToAuthenticatedSession(t *testing.T) {
@@ -928,6 +1061,8 @@ func TestOAuthLoginLegacyGitHubBindingRequiresAccountEvidence(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			setupSecurityEnrollmentTest(t)
+			require.NoError(t, model.DB.AutoMigrate(&model.RegistrationBatch{}))
+			require.NoError(t, model.InitializeRegistrationBatch())
 			previousRegister := common.RegisterEnabled
 			common.RegisterEnabled = test.registerEnabled
 			t.Cleanup(func() { common.RegisterEnabled = previousRegister })

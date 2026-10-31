@@ -25,6 +25,7 @@ import type { NavGroup, ResolvedSidebarView } from '@/components/layout/types'
 import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
+import { usePublicBenefitMode } from './use-public-benefit-mode'
 import { useSidebarConfig } from './use-sidebar-config'
 import { useSidebarData } from './use-sidebar-data'
 
@@ -46,6 +47,7 @@ const ROOT_VIEW_KEY = '__root'
  */
 export function useSidebarView(): ResolvedSidebarView {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
   const pathname = useLocation({ select: (l) => l.pathname })
   const userRole = useAuthStore((s) => s.auth.user?.role)
   const rootSidebarData = useSidebarData()
@@ -70,7 +72,7 @@ export function useSidebarView(): ResolvedSidebarView {
     return {
       key: view.id,
       view,
-      navGroups: view.getNavGroups(t),
+      navGroups: view.getNavGroups(t, publicBenefitMode),
     }
   }
 

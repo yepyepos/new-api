@@ -32,6 +32,7 @@ import {
   getSelfSubscriptionFull,
 } from '@/features/subscriptions/api'
 import { useMediaQuery } from '@/hooks'
+import { useStatus } from '@/hooks/use-status'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { createServerError } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
@@ -97,10 +98,17 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   } = useLogsViewScope()
   const isMobile = useMediaQuery('(max-width: 640px)')
   const searchParams = route.useSearch()
+  const { status, loading: statusLoading } = useStatus()
+  const publicBenefitMode = status?.public_benefit_mode_enabled === true
   const userId = useAuthStore((state) => state.auth.user?.id)
   const { data: showBillingSource = false } = useQuery({
-    queryKey: ['usage-log-billing-source', isAdmin, userId],
-    enabled: logCategory === 'common' && userId != null,
+    queryKey: ['usage-log-billing-source', isAdmin, userId, publicBenefitMode],
+    enabled:
+      logCategory === 'common' &&
+      userId != null &&
+      !statusLoading &&
+      status != null &&
+      !publicBenefitMode,
     queryFn: async () => {
       if (isAdmin) {
         const plansResult = await getAdminPlans()

@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import useDialogState from '@/hooks/use-dialog'
+import { usePublicBenefitMode } from '@/hooks/use-public-benefit-mode'
 import { useIsSidebarModuleVisible } from '@/hooks/use-sidebar-config'
 import { useUserDisplay } from '@/hooks/use-user-display'
 import type { AuthUser } from '@/stores/auth-store'
@@ -80,6 +81,7 @@ interface MobileUserProfileProps {
 
 function MobileUserProfile({ user, onNavigate }: MobileUserProfileProps) {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
   const [signOutOpen, setSignOutOpen] = useDialogState()
   const { displayName, initials, roleLabel } = useUserDisplay(user)
   const isSecurityVisible = useIsSidebarModuleVisible('/security')
@@ -141,7 +143,7 @@ function MobileUserProfile({ user, onNavigate }: MobileUserProfileProps) {
           className='text-primary/60 hover:text-primary/80 border-border flex items-center gap-2.5 border-b p-2.5 transition-colors'
         >
           <Wallet className='size-4' />
-          {t('Wallet')}
+          {publicBenefitMode ? t('Quota Center') : t('Wallet')}
         </Link>
 
         {/* Sign out - consistent style */}

@@ -108,6 +108,7 @@ import { SecureVerificationDialog } from '@/features/auth/secure-verification'
 import { PluginIcon } from '@/features/task-plugins/components/plugin-icon'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useHiddenClickUnlock } from '@/hooks/use-hidden-click-unlock'
+import { usePublicBenefitMode } from '@/hooks/use-public-benefit-mode'
 import {
   ADMIN_PERMISSION_ACTIONS,
   ADMIN_PERMISSION_RESOURCES,
@@ -408,6 +409,7 @@ export function ChannelMutateDrawer({
   currentRow,
 }: ChannelMutateDrawerProps) {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
   const queryClient = useQueryClient()
   const { setOpen } = useChannels()
   const currentUser = useAuthStore((s) => s.auth.user)
@@ -3908,7 +3910,7 @@ export function ChannelMutateDrawer({
             )}
 
             {/* SiliconFlow (type 40) */}
-            {currentType === 40 && (
+            {currentType === 40 && !publicBenefitMode && (
               <Alert>
                 <AlertDescription>
                   {t('Referral link:')}{' '}

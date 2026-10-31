@@ -40,7 +40,10 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
+import { isCommercialPage } from '@/lib/community-mode'
 import { ROLE } from '@/lib/roles'
+
+import { usePublicBenefitMode } from './use-public-benefit-mode'
 
 /**
  * Root navigation groups for the application sidebar.
@@ -50,8 +53,9 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
 
-  return {
+  const data: SidebarData = {
     navGroups: [
       {
         id: 'chat',
@@ -112,7 +116,7 @@ export function useSidebarData(): SidebarData {
         title: t('Personal'),
         items: [
           {
-            title: t('Wallet'),
+            title: publicBenefitMode ? t('Quota Center') : t('Wallet'),
             url: '/wallet',
             icon: Wallet,
           },
@@ -180,4 +184,13 @@ export function useSidebarData(): SidebarData {
       },
     ],
   }
+  if (publicBenefitMode) {
+    data.navGroups = data.navGroups.map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => !('url' in item && isCommercialPage(String(item.url)))
+      ),
+    }))
+  }
+  return data
 }

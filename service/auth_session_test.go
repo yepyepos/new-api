@@ -10,6 +10,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
@@ -130,6 +131,38 @@ func TestCreateLoginSessionEnforcesActiveLimitAcrossAuthVersions(t *testing.T) {
 	var count int64
 	require.NoError(t, model.DB.Model(&model.UserSession{}).Count(&count).Error)
 	assert.Equal(t, int64(50), count)
+}
+
+func TestDiscordOnlyLoginEnforcesAllSessionIssuanceMethods(t *testing.T) {
+	useTestSessionSecret(t)
+	user := setupAuthSessionTestDB(t)
+	settings := system_setting.GetDiscordSettings()
+	previous := *settings
+	settings.OnlyLogin = true
+	t.Cleanup(func() { *settings = previous })
+
+	for _, method := range []string{"password", "passkey", "oauth:github", "oauth:oidc", "wechat", "unknown"} {
+		bundle, err := CreateLoginSession(user.Id, method, "127.0.0.1", "test-agent")
+		assert.ErrorIs(t, err, ErrDiscordLoginRequired, method)
+		assert.Nil(t, bundle)
+		bundle, err = CreateLoginSessionAtAuthVersion(user.Id, user.AuthVersion, method, "127.0.0.1", "test-agent")
+		assert.ErrorIs(t, err, ErrDiscordLoginRequired, method)
+		assert.Nil(t, bundle)
+	}
+	count, err := model.CountActiveUserSessions(user.Id, time.Now().Unix())
+	require.NoError(t, err)
+	assert.Zero(t, count)
+	_, err = CreateLoginSession(user.Id, "oauth:discord", "127.0.0.1", "test-agent")
+	require.NoError(t, err)
+	for _, role := range []int{common.RoleAdminUser, common.RoleRootUser} {
+		require.NoError(t, model.DB.Model(user).Update("role", role).Error)
+		_, err = CreateLoginSession(user.Id, "password", "127.0.0.1", "test-agent")
+		require.NoError(t, err, "administrators must keep recovery login access")
+	}
+	settings.OnlyLogin = false
+	require.NoError(t, model.DB.Model(user).Update("role", common.RoleCommonUser).Error)
+	_, err = CreateLoginSession(user.Id, "password", "127.0.0.1", "test-agent")
+	require.NoError(t, err, "disabling the policy restores existing behavior")
 }
 
 func TestCreateLoginSessionEnforcesIssuanceLimitAcrossAllStatuses(t *testing.T) {

@@ -46,6 +46,11 @@ const defaults: ComponentProps<typeof OAuthSection>['defaultValues'] = {
   'discord.enabled': false,
   'discord.client_id': '',
   'discord.client_secret': '',
+  'discord.guild_id': '',
+  'discord.role_ids': '',
+  'discord.role_match_mode': 'any',
+  'discord.only_login': false,
+  'discord.blocked_guild_ids': '',
   'oidc.enabled': false,
   'oidc.display_name': '',
   'oidc.client_id': '',
@@ -114,6 +119,189 @@ beforeEach(async () => {
 })
 
 describe('OAuth settings saves', () => {
+  it('defaults to any role and saves all-role matching with keyboard selection', async () => {
+    const user = userEvent.setup()
+    await renderSettings({
+      'discord.guild_id': '123456789012345678',
+      'discord.role_ids': '234567890123456789,345678901234567890',
+    })
+    await user.click(screen.getByRole('tab', { name: 'Discord' }))
+    expect(
+      screen.getByRole('radiogroup', { name: 'Discord role matching' })
+    ).toHaveClass('grid-cols-1', 'sm:grid-cols-2')
+    const anyRole = screen.getByRole('radio', { name: 'Match any role' })
+    expect(anyRole).toBeChecked()
+    expect(anyRole).toHaveAccessibleDescription(
+      'Any one of the listed roles is enough.'
+    )
+    await user.click(anyRole)
+    await user.keyboard('[ArrowRight]')
+    expect(screen.getByRole('radio', { name: 'Match all roles' })).toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() =>
+      expect(api.put).toHaveBeenCalledWith('/api/option/', {
+        key: 'discord.role_match_mode',
+        value: 'all',
+      })
+    )
+    expect(api.put).toHaveBeenCalledTimes(1)
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled()
+    )
+  })
+
+  it('loads saved all-role matching and resets unsaved changes without changing roles', async () => {
+    const user = userEvent.setup()
+    await renderSettings({ 'discord.role_match_mode': 'all' })
+    await user.click(screen.getByRole('tab', { name: 'Discord' }))
+    expect(screen.getByRole('radio', { name: 'Match all roles' })).toBeChecked()
+    expect(
+      screen.getByText(
+        'When role IDs are empty, only server membership is checked.'
+      )
+    ).toBeVisible()
+    await user.click(screen.getByRole('radio', { name: 'Match any role' }))
+    await user.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(screen.getByRole('radio', { name: 'Match all roles' })).toBeChecked()
+    expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it('disables role matching controls while saving and reenables them on success', async () => {
+    let finishSave!: (value: { data: { success: boolean } }) => void
+    vi.mocked(api.put).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSave = resolve
+        })
+    )
+    const user = userEvent.setup()
+    await renderSettings()
+    await user.click(screen.getByRole('tab', { name: 'Discord' }))
+    await user.click(screen.getByRole('radio', { name: 'Match all roles' }))
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await waitFor(() =>
+      expect(
+        screen.getByRole('radio', { name: 'Match all roles' })
+      ).toHaveAttribute('aria-disabled', 'true')
+    )
+    expect(
+      screen.getByRole('radio', { name: 'Match any role' })
+    ).toHaveAttribute('aria-disabled', 'true')
+    finishSave({ data: { success: true } })
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled()
+    )
+    expect(
+      screen.getByRole('radio', { name: 'Match all roles' })
+    ).not.toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('saves Discord credentials and server before enabling restricted login, with roles optional', async () => {
+    const user = userEvent.setup()
+    await renderSettings()
+    await user.click(screen.getByRole('tab', { name: 'Discord' }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Client ID' }),
+      'discord-client'
+    )
+    await user.type(screen.getByLabelText('Client Secret'), 'discord-secret')
+    await user.type(
+      screen.getByRole('textbox', { name: 'Required Discord server ID' }),
+      '123456789012345678'
+    )
+    await user.click(
+      screen.getByRole('switch', { name: 'Enable Discord OAuth' })
+    )
+    await user.click(
+      screen.getByRole('switch', {
+        name: 'Require Discord login for regular users',
+      })
+    )
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled()
+    )
+    const keys = vi
+      .mocked(api.put)
+      .mock.calls.map((call) => (call[1] as { key: string }).key)
+    expect(keys.indexOf('discord.client_secret')).toBeLessThan(
+      keys.indexOf('discord.enabled')
+    )
+    expect(keys.indexOf('discord.guild_id')).toBeLessThan(
+      keys.indexOf('discord.only_login')
+    )
+    expect(keys.at(-1)).toBe('discord.only_login')
+    expect(api.put).not.toHaveBeenCalledWith(
+      '/api/option/',
+      expect.objectContaining({ key: 'discord.role_ids' })
+    )
+  })
+
+  it('rejects role restrictions without a server before sending any changes', async () => {
+    const user = userEvent.setup()
+    await renderSettings()
+    await user.click(screen.getByRole('tab', { name: 'Discord' }))
+    await user.type(
+      screen.getByRole('textbox', {
+        name: 'Allowed Discord role IDs (optional)',
+      }),
+      '234567890123456789'
+    )
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    expect(
+      await screen.findByText(
+        'Specify a Discord server before restricting roles.'
+      )
+    ).toBeVisible()
+    expect(api.put).not.toHaveBeenCalled()
+  })
+
+  it('disables Discord-only login and clears roles before removing its server', async () => {
+    const user = userEvent.setup()
+    await renderSettings({
+      'discord.enabled': true,
+      'discord.client_id': 'client',
+      'discord.guild_id': '123456789012345678',
+      'discord.role_ids': '234567890123456789',
+      'discord.only_login': true,
+    })
+    await user.click(screen.getByRole('tab', { name: 'Discord' }))
+    await user.click(
+      screen.getByRole('switch', {
+        name: 'Require Discord login for regular users',
+      })
+    )
+    await user.click(
+      screen.getByRole('switch', { name: 'Enable Discord OAuth' })
+    )
+    await user.clear(
+      screen.getByRole('textbox', {
+        name: 'Allowed Discord role IDs (optional)',
+      })
+    )
+    await user.clear(
+      screen.getByRole('textbox', { name: 'Required Discord server ID' })
+    )
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeDisabled()
+    )
+    const keys = vi
+      .mocked(api.put)
+      .mock.calls.map((call) => (call[1] as { key: string }).key)
+    expect(keys[0]).toBe('discord.only_login')
+    expect(keys.indexOf('discord.role_ids')).toBeLessThan(
+      keys.indexOf('discord.guild_id')
+    )
+    expect(keys.indexOf('discord.only_login')).toBeLessThan(
+      keys.indexOf('discord.enabled')
+    )
+  })
+
   it.each([
     [false, 'provider.example.com/discovery'],
     [true, 'provider.example.com/discovery'],

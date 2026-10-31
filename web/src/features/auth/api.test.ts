@@ -30,6 +30,56 @@ import { consumeOAuthLoginRedirect } from './lib/oauth-callback-mode'
 afterEach(() => vi.restoreAllMocks())
 
 test.each([true, false])(
+  'Discord login uses the server-generated PKCE URL and refuses an unsafe fallback (URL present: %s)',
+  async (hasAuthorizationUrl) => {
+    vi.spyOn(window, 'localStorage', 'get').mockReturnValue(
+      window.sessionStorage
+    )
+    vi.spyOn(api, 'post').mockImplementation(async (url) => {
+      if (url === '/api/user/auth/logout') return { data: { success: true } }
+      if (url === '/api/oauth/state') {
+        return {
+          data: {
+            success: true,
+            data: {
+              flow_token: 'discord-state',
+              ...(hasAuthorizationUrl
+                ? {
+                    authorization_url:
+                      'https://discord.com/oauth2/authorize?code_challenge=server-pkce',
+                  }
+                : {}),
+            },
+          },
+        }
+      }
+      throw new Error(`Unexpected POST ${url}`)
+    })
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    const error = vi.spyOn(toast, 'error')
+    const { result } = renderHook(() =>
+      useOAuthLogin(
+        { discord_oauth: true, discord_client_id: 'client' },
+        '/dashboard'
+      )
+    )
+
+    await act(() => result.current.handleDiscordLogin())
+
+    if (hasAuthorizationUrl) {
+      expect(open).toHaveBeenCalledWith(
+        'https://discord.com/oauth2/authorize?code_challenge=server-pkce',
+        '_self'
+      )
+      expect(consumeOAuthLoginRedirect('discord-state')).toBe('/dashboard')
+    } else {
+      expect(open).not.toHaveBeenCalled()
+      expect(error).toHaveBeenCalledWith('Failed to start Discord login')
+    }
+  }
+)
+
+test.each([true, false])(
   'starts Telegram OAuth only when configuration is ready: %s',
   async (configured) => {
     vi.spyOn(window, 'localStorage', 'get').mockReturnValue(

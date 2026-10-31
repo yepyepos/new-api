@@ -1,9 +1,16 @@
 package operation_setting
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+)
 
 var DemoSiteEnabled = false
 var SelfUseModeEnabled = false
+
+// Deployment-level policy; dashboard settings cannot enable commercial features.
+var PublicBenefitModeEnabled = common.GetEnvOrDefaultBool("PUBLIC_BENEFIT_MODE", false)
 
 var AutomaticDisableKeywords = []string{
 	"Your credit balance is too low",

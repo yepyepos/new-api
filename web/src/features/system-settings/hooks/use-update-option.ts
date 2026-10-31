@@ -28,6 +28,12 @@ import type { UpdateOptionRequest, UpdatePasskeyDomainsRequest } from '../types'
 
 // Configuration keys that require status refresh
 const STATUS_RELATED_KEYS = new Set([
+  'RegisterEnabled',
+  'checkin_setting.enabled',
+  'discord.enabled',
+  'discord.client_id',
+  'discord.guild_id',
+  'discord.only_login',
   'HeaderNavModules',
   'SidebarModulesAdmin',
   'Notice',
@@ -61,6 +67,9 @@ export function useUpdateOption() {
       if (data.success) {
         // Always refresh system-options
         queryClient.invalidateQueries({ queryKey: ['system-options'] })
+        if (variables.key.startsWith('checkin_setting.')) {
+          queryClient.invalidateQueries({ queryKey: ['checkin-status'] })
+        }
 
         // If updating frontend-display-related config, also refresh status
         if (STATUS_RELATED_KEYS.has(variables.key)) {

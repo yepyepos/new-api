@@ -46,7 +46,11 @@ export function buildGitHubOAuthUrl(clientId: string, state: string): string {
 /**
  * Build Discord OAuth URL
  */
-export function buildDiscordOAuthUrl(clientId: string, state: string): string {
+export function buildDiscordOAuthUrl(
+  clientId: string,
+  state: string,
+  verifyMembership = false
+): string {
   const url = new URL('https://discord.com/oauth2/authorize')
   url.searchParams.set('client_id', clientId)
   url.searchParams.set(
@@ -54,7 +58,10 @@ export function buildDiscordOAuthUrl(clientId: string, state: string): string {
     `${window.location.origin}/oauth/discord`
   )
   url.searchParams.set('response_type', 'code')
-  url.searchParams.set('scope', 'identify+openid')
+  url.searchParams.set(
+    'scope',
+    verifyMembership ? 'identify guilds.members.read' : 'identify'
+  )
   url.searchParams.set('state', state)
   return url.toString()
 }
@@ -96,7 +103,11 @@ export function buildOAuthAuthorizationUrl(
       break
     case 'discord':
       if (status.discord_client_id) {
-        return buildDiscordOAuthUrl(status.discord_client_id, state)
+        return buildDiscordOAuthUrl(
+          status.discord_client_id,
+          state,
+          status.discord_guild_check
+        )
       }
       break
     case 'oidc':

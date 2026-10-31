@@ -19,9 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useStatus } from '@/hooks/use-status'
 
-import { AuthLayout } from '../auth-layout'
+import { NailongAuthLayout } from '../components/nailong-auth-layout'
 import { TermsFooter } from '../components/terms-footer'
 import { UserAuthForm } from './components/user-auth-form'
 
@@ -31,35 +32,41 @@ export function SignIn() {
   const { status } = useStatus()
 
   return (
-    <AuthLayout>
-      <div className='w-full space-y-8'>
-        <div className='space-y-2'>
-          <h2 className='text-center text-2xl font-semibold tracking-tight sm:text-left'>
-            {t('Sign in')}
-          </h2>
+    <NailongAuthLayout>
+      <Tabs defaultValue='login'>
+        <TabsList
+          className='nailong-tabs'
+          aria-label={t('Sign in and registration')}
+        >
+          <TabsTrigger value='login'>{t('Back to the hideaway')}</TabsTrigger>
+          <TabsTrigger value='invitation'>
+            {t('Get an entry ticket')}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value='login' className='nailong-panel'>
+          <div className='nailong-welcome'>
+            <h2>{t('Welcome back!')}</h2>
+            <p>{t('Your community. Your access.')}</p>
+          </div>
+          <UserAuthForm collapsePasswordLogin redirectTo={redirect} />
           {!status?.self_use_mode_enabled &&
-            status?.register_enabled !== false && (
-              <p className='text-muted-foreground text-left text-sm sm:text-base'>
-                {t("Don't have an account?")}{' '}
-                <Link
-                  to='/sign-up'
-                  className='hover:text-primary font-medium underline underline-offset-4'
-                >
-                  {t('Sign up')}
-                </Link>
-                .
-              </p>
+            status?.register_enabled !== false &&
+            status?.password_register_enabled !== false &&
+            !status?.discord_only_login && (
+              <Link to='/sign-up' className='nailong-admin'>
+                {t('Sign up')}
+              </Link>
             )}
-        </div>
-
-        <UserAuthForm redirectTo={redirect} />
-
-        <TermsFooter
-          variant='sign-in'
-          status={status}
-          className='text-center'
-        />
-      </div>
-    </AuthLayout>
+        </TabsContent>
+        <TabsContent value='invitation' className='nailong-panel'>
+          <div className='nailong-welcome'>
+            <h2>{t('Your ticket to the community')}</h2>
+            <p>{t('Enter a registration code before creating an account.')}</p>
+          </div>
+          <UserAuthForm invitationRegistration redirectTo={redirect} />
+        </TabsContent>
+      </Tabs>
+      <TermsFooter variant='sign-in' status={status} className='text-center' />
+    </NailongAuthLayout>
   )
 }

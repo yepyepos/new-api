@@ -364,6 +364,9 @@ func migrateDB() error {
 		&TwoFA{},
 		&TwoFABackupCode{},
 		&Checkin{},
+		&RegistrationInvite{},
+		&RegistrationAdmission{},
+		&RegistrationBatch{},
 		&SubscriptionOrder{},
 		&UserSubscription{},
 		&SubscriptionPreConsumeRecord{},
@@ -378,6 +381,9 @@ func migrateDB() error {
 		&UserAccessToken{},
 	)
 	if err != nil {
+		return err
+	}
+	if err := InitializeRegistrationBatch(); err != nil {
 		return err
 	}
 	if err := InitializeUserAuthVersions(); err != nil {

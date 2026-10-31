@@ -215,6 +215,10 @@ func writeLoginResponse(c *gin.Context, user *model.User, bundle *service.AuthBu
 }
 
 func Register(c *gin.Context) {
+	if err := service.RequireDiscordLogin(common.RoleCommonUser, "password"); err != nil {
+		writeSecurityOperationError(c, err)
+		return
+	}
 	if !common.RegisterEnabled {
 		common.ApiErrorT(c, "New user registration has been disabled by administrator")
 		return
@@ -283,7 +287,7 @@ func Register(c *gin.Context) {
 	if common.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
 	}
-	if err := cleanUser.Insert(inviterId); err != nil {
+	if err := cleanUser.Register(inviterId); err != nil {
 		if errors.Is(err, model.ErrEmailAlreadyTaken) {
 			common.ApiErrorT(c, "Email address is already in use")
 			return

@@ -23,6 +23,14 @@ import i18next from 'i18next'
 export const safeServerErrorMessage = Symbol('safeServerErrorMessage')
 
 const serverErrorMessageKeys = {
+  COMMERCIAL_FEATURES_DISABLED:
+    'Paid and referral features are disabled on this community site.',
+  DISCORD_LOGIN_REQUIRED:
+    'Please sign in with Discord. Other sign-in methods are reserved for administrators.',
+  REGISTRATION_INVITATION_INVALID:
+    'Registration invitation is invalid, expired, disabled, or fully used.',
+  ORDINARY_REGISTRATION_FULL:
+    'Ordinary registration is full. Use a registration invitation or contact the administrator.',
   TELEGRAM_OAUTH_NOT_CONFIGURED:
     'Telegram OAuth is not configured or enabled. Please contact your administrator.',
   TELEGRAM_OAUTH_CONFLICT:

@@ -16,8 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type LinkProps } from '@tanstack/react-router'
-import { type TFunction } from 'i18next'
+import type { LinkProps } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 
 /**
  * Base navigation item type
@@ -125,7 +125,7 @@ export type SidebarView = {
   /** Back-navigation descriptor; required for nested views */
   parent: SidebarViewParent
   /** Nav group builder, called per render with the active translator */
-  getNavGroups: (t: TFunction) => NavGroup[]
+  getNavGroups: (t: TFunction, publicBenefitMode?: boolean) => NavGroup[]
 }
 
 /**

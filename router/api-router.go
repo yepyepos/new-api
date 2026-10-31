@@ -16,6 +16,7 @@ import (
 
 func SetApiRouter(router *gin.Engine) {
 	apiRouter := router.Group("/api")
+	apiRouter.Use(middleware.PublicBenefitMode())
 	apiRouter.Use(middleware.RouteTag("api"))
 	apiRouter.Use(gzip.Gzip(gzip.DefaultCompression))
 	apiRouter.Use(middleware.AccessTokenAudit())
@@ -213,6 +214,10 @@ func SetApiRouter(router *gin.Engine) {
 		optionRoute.Use(middleware.RootAuth())
 		{
 			optionRoute.GET("/", controller.GetOptions)
+			optionRoute.GET("/registration", middleware.DisableCache(), controller.GetRegistrationAdmission)
+			optionRoute.PUT("/registration/batch", controller.StartRegistrationBatch)
+			optionRoute.POST("/registration/invites", middleware.CriticalRateLimit(), controller.CreateRegistrationInvitation)
+			optionRoute.DELETE("/registration/invites/:id", controller.DisableRegistrationInvitation)
 			optionRoute.GET("/request_policy", controller.GetRequestPolicy)
 			optionRoute.PATCH("/request_policy", controller.UpdateRequestPolicy)
 			optionRoute.PUT("/", controller.UpdateOption)

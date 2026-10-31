@@ -2,7 +2,6 @@ package controller
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -13,14 +12,19 @@ import (
 
 // GetCheckinStatus 获取用户签到状态和历史记录
 func GetCheckinStatus(c *gin.Context) {
-	setting := operation_setting.GetCheckinSetting()
+	setting := operation_setting.CheckinSettingsSnapshot()
 	if !setting.Enabled {
 		common.ApiErrorT(c, "Check-in feature is not enabled")
 		return
 	}
 	userId := c.GetInt("id")
 	// 获取月份参数，默认为当前月份
-	month := c.DefaultQuery("month", time.Now().Format("2006-01"))
+	today, err := setting.Today()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	month := c.DefaultQuery("month", today[:7])
 
 	stats, err := model.GetUserCheckinStats(userId, month)
 	if err != nil {
@@ -31,17 +35,22 @@ func GetCheckinStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"enabled":   setting.Enabled,
-			"min_quota": setting.MinQuota,
-			"max_quota": setting.MaxQuota,
-			"stats":     stats,
+			"enabled":           setting.Enabled,
+			"min_quota":         setting.Quota,
+			"max_quota":         setting.Quota,
+			"quota":             setting.Quota,
+			"threshold_enabled": setting.ThresholdEnabled,
+			"balance_threshold": setting.BalanceThreshold,
+			"timezone":          setting.Timezone,
+			"today":             today,
+			"stats":             stats,
 		},
 	})
 }
 
 // DoCheckin 执行用户签到
 func DoCheckin(c *gin.Context) {
-	setting := operation_setting.GetCheckinSetting()
+	setting := operation_setting.CheckinSettingsSnapshot()
 	if !setting.Enabled {
 		common.ApiErrorT(c, "Check-in feature is not enabled")
 		return

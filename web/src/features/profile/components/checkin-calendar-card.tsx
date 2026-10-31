@@ -54,12 +54,14 @@ interface CheckinCalendarCardProps {
   checkinEnabled: boolean
   turnstileEnabled: boolean
   turnstileSiteKey: string
+  onCheckinSuccess?: () => void
 }
 
 export function CheckinCalendarCard({
   checkinEnabled,
   turnstileEnabled,
   turnstileSiteKey,
+  onCheckinSuccess,
 }: CheckinCalendarCardProps) {
   const { t } = useTranslation()
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -115,10 +117,11 @@ export function CheckinCalendarCard({
     )
   }, [checkinData?.stats?.records])
 
-  const todayString = useMemo(() => {
+  const localToday = useMemo(() => {
     const d = new Date()
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }, [])
+  const todayString = checkinData?.today || localToday
 
   const checkedToday = checkinData?.stats?.checked_in_today === true
   const todayAward = checkinRecordsMap[todayString]
@@ -127,6 +130,10 @@ export function CheckinCalendarCard({
     if (initialLoaded) return
     if (isLoading) return
     if (!checkinData) return
+    if (checkinData.today) {
+      const [year, month] = checkinData.today.split('-').map(Number)
+      setCurrentMonth(new Date(year, month - 1, 1))
+    }
     setCollapsed(checkedToday)
     setInitialLoaded(true)
   }, [checkinData, checkedToday, initialLoaded, isLoading])
@@ -150,6 +157,7 @@ export function CheckinCalendarCard({
             `${t('Check-in successful! Received')} ${formatQuotaWithCurrency(res.data.quota_awarded)}`
           )
           refetch()
+          onCheckinSuccess?.()
           setTurnstileModalVisible(false)
         } else {
           if (!token && shouldTriggerTurnstile(res.message)) {
@@ -171,7 +179,7 @@ export function CheckinCalendarCard({
         setCheckinLoading(false)
       }
     },
-    [refetch, shouldTriggerTurnstile, t, turnstileSiteKey]
+    [refetch, shouldTriggerTurnstile, t, turnstileSiteKey, onCheckinSuccess]
   )
 
   const handlePrevMonth = () => {
@@ -471,12 +479,26 @@ export function CheckinCalendarCard({
                 <div className='bg-muted/30 text-muted-foreground rounded-lg border p-3 text-xs'>
                   <ul className='list-disc space-y-1 pl-5'>
                     <li>
-                      {t('Check in daily to receive random quota rewards')}
+                      {t('Fixed check-in reward')}:{' '}
+                      {formatQuotaWithCurrency(checkinData?.quota || 0)}
                     </li>
                     <li>
                       {t('Rewards will be added directly to your balance')}
                     </li>
                     <li>{t('Do not repeat check-in; only once per day')}</li>
+                    {checkinData?.threshold_enabled && (
+                      <li>
+                        {t('Check-in balance threshold')}:{' '}
+                        {formatQuotaWithCurrency(checkinData.balance_threshold)}
+                        .{' '}
+                        {t(
+                          'A balance above the threshold blocks the claim without using the daily chance.'
+                        )}
+                      </li>
+                    )}
+                    <li>
+                      {t('Check-in timezone')}: {checkinData?.timezone}
+                    </li>
                   </ul>
                 </div>
               </div>

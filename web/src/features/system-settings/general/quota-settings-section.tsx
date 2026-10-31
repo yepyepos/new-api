@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { usePublicBenefitMode } from '@/hooks/use-public-benefit-mode'
 import { formatQuota } from '@/lib/format'
 
 import { FormDirtyIndicator } from '../components/form-dirty-indicator'
@@ -89,6 +90,7 @@ export function QuotaSettingsSection({
   complianceConfirmed = true,
 }: QuotaSettingsSectionProps) {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
   const updateOption = useUpdateOption()
   const handleNumberChange =
     (onChange: (value: QuotaInputValue) => void) =>
@@ -119,7 +121,7 @@ export function QuotaSettingsSection({
     <SettingsSection title={t('Quota Settings')}>
       <FormNavigationGuard when={isDirty} />
 
-      {!complianceConfirmed ? (
+      {!publicBenefitMode && !complianceConfirmed ? (
         <Alert variant='destructive'>
           <AlertDescription>
             {t(
@@ -224,61 +226,67 @@ export function QuotaSettingsSection({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name='QuotaForInviter'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Inviter Reward')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      value={field.value ?? ''}
-                      onChange={handleNumberChange(field.onChange)}
-                      name={field.name}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {t(
-                      'Quota given to users who invite others ({{formattedQuota}})',
-                      {
-                        formattedQuota: formatQuotaInputValue(field.value),
-                      }
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!publicBenefitMode && (
+              <>
+                <FormField
+                  control={form.control}
+                  name='QuotaForInviter'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Inviter Reward')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          value={field.value ?? ''}
+                          onChange={handleNumberChange(field.onChange)}
+                          name={field.name}
+                          onBlur={field.onBlur}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Quota given to users who invite others ({{formattedQuota}})',
+                          {
+                            formattedQuota: formatQuotaInputValue(field.value),
+                          }
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name='QuotaForInvitee'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Invitee Reward')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='number'
-                      value={field.value ?? ''}
-                      onChange={handleNumberChange(field.onChange)}
-                      name={field.name}
-                      onBlur={field.onBlur}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {t('Quota given to invited users ({{formattedQuota}})', {
-                      formattedQuota: formatQuotaInputValue(field.value),
-                    })}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+                <FormField
+                  control={form.control}
+                  name='QuotaForInvitee'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Invitee Reward')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          value={field.value ?? ''}
+                          onChange={handleNumberChange(field.onChange)}
+                          name={field.name}
+                          onBlur={field.onBlur}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Quota given to invited users ({{formattedQuota}})',
+                          {
+                            formattedQuota: formatQuotaInputValue(field.value),
+                          }
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
             <SettingsFormGridItem span='full'>
               <FormField
                 control={form.control}
@@ -305,25 +313,27 @@ export function QuotaSettingsSection({
               />
             </SettingsFormGridItem>
 
-            <FormField
-              control={form.control}
-              name='TopUpLink'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Top-Up Link')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('https://example.com/topup')}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {t('External link for users to purchase quota')}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!publicBenefitMode && (
+              <FormField
+                control={form.control}
+                name='TopUpLink'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Top-Up Link')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('https://example.com/topup')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t('External link for users to purchase quota')}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </SettingsFormGrid>
         </SettingsForm>
       </Form>

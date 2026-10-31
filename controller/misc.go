@@ -42,10 +42,21 @@ func GetStatus(c *gin.Context) {
 
 	cs := console_setting.GetConsoleSetting()
 	passkeySetting := system_setting.PasskeySettingsSnapshot()
+	discordSetting := system_setting.DiscordSettingsSnapshot()
+	batchFull := false
+	if model.DB != nil {
+		var batch model.RegistrationBatch
+		if err := model.DB.First(&batch, 1).Error; err != nil {
+			batchFull = true
+		} else if batch.Enabled && batch.Used >= batch.Limit {
+			batchFull = true
+		}
+	}
 	common.OptionMapRWMutex.RLock()
 	defer common.OptionMapRWMutex.RUnlock()
 
 	legalSetting := system_setting.GetLegalSettings()
+	ordinaryRegistrationOpen := common.RegisterEnabled && !batchFull
 
 	data := gin.H{
 		"version":                     common.Version,
@@ -53,8 +64,10 @@ func GetStatus(c *gin.Context) {
 		"email_verification":          common.EmailVerificationEnabled,
 		"github_oauth":                common.GitHubOAuthEnabled,
 		"github_client_id":            common.GitHubClientId,
-		"discord_oauth":               system_setting.GetDiscordSettings().Enabled,
-		"discord_client_id":           system_setting.GetDiscordSettings().ClientId,
+		"discord_oauth":               discordSetting.Enabled,
+		"discord_client_id":           discordSetting.ClientId,
+		"discord_guild_check":         discordSetting.GuildID != "",
+		"discord_only_login":          discordSetting.OnlyLogin,
 		"linuxdo_oauth":               common.LinuxDOOAuthEnabled,
 		"linuxdo_client_id":           common.LinuxDOClientId,
 		"linuxdo_minimum_trust_level": common.LinuxDOMinimumTrustLevel,
@@ -87,7 +100,8 @@ func GetStatus(c *gin.Context) {
 		"chats":                         setting.Chats,
 		"demo_site_enabled":             operation_setting.DemoSiteEnabled,
 		"self_use_mode_enabled":         operation_setting.SelfUseModeEnabled,
-		"register_enabled":              common.RegisterEnabled,
+		"public_benefit_mode_enabled":   operation_setting.PublicBenefitModeEnabled,
+		"register_enabled":              ordinaryRegistrationOpen,
 		"password_login_enabled":        common.PasswordLoginEnabled,
 		"password_register_enabled":     common.PasswordRegisterEnabled,
 		"default_use_auto_group":        setting.DefaultUseAutoGroup,

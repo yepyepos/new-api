@@ -30,6 +30,11 @@ import { PasswordInput } from '@/components/password-input'
 import { Turnstile } from '@/components/turnstile'
 import { Button } from '@/components/ui/button'
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import {
   Form,
   FormControl,
   FormField,
@@ -63,10 +68,14 @@ import { cn } from '@/lib/utils'
 export function UserAuthForm({
   className,
   redirectTo,
+  invitationRegistration = false,
+  collapsePasswordLogin = false,
   ...props
 }: AuthFormProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
+  const [registrationCode, setRegistrationCode] = useState('')
+  const [passwordExpanded, setPasswordExpanded] = useState(false)
   const [wechatCode, setWeChatCode] = useState('')
   const [agreedToLegal, setAgreedToLegal] = useState(false)
   const [passkeySupported, setPasskeySupported] = useState(false)
@@ -84,10 +93,11 @@ export function UserAuthForm({
   const loginFailedMessage = t('Login failed')
 
   const { status } = useStatus()
-  const passkeyLoginEnabled = Boolean(
-    status?.passkey_login ?? status?.data?.passkey_login
-  )
+  const passkeyLoginEnabled =
+    !invitationRegistration &&
+    Boolean(status?.passkey_login ?? status?.data?.passkey_login)
   const passwordLoginEnabled =
+    !invitationRegistration &&
     (status?.password_login_enabled ??
       status?.data?.password_login_enabled ??
       true) !== false
@@ -111,7 +121,8 @@ export function UserAuthForm({
     isPasskeyLoading ||
     !passkeySupported ||
     (requiresLegalConsent && !agreedToLegal)
-  const hasWeChatLogin = Boolean(status?.wechat_login)
+  const hasWeChatLogin =
+    !invitationRegistration && Boolean(status?.wechat_login)
   const hasOAuthLogin = Boolean(
     status?.github_oauth ||
     status?.discord_oauth ||
@@ -120,8 +131,9 @@ export function UserAuthForm({
     status?.telegram_oauth ||
     (status?.custom_oauth_providers?.length ?? 0) > 0
   )
-  const hasAlternativeLogin =
-    passkeyLoginEnabled || hasWeChatLogin || hasOAuthLogin
+  const hasAlternativeLogin = invitationRegistration
+    ? Boolean(status?.discord_oauth)
+    : passkeyLoginEnabled || hasWeChatLogin || hasOAuthLogin
 
   useEffect(() => {
     if (requiresLegalConsent) {
@@ -335,7 +347,15 @@ export function UserAuthForm({
       <OAuthProviders
         status={status}
         redirectTo={redirectTo}
-        disabled={isLoading || (requiresLegalConsent && !agreedToLegal)}
+        registrationInviteCode={
+          invitationRegistration ? registrationCode : undefined
+        }
+        discordOnly={invitationRegistration}
+        disabled={
+          isLoading ||
+          (invitationRegistration && !registrationCode.trim()) ||
+          (requiresLegalConsent && !agreedToLegal)
+        }
         onWeChatLogin={hasWeChatLogin ? handleOpenWeChatDialog : undefined}
         isWeChatLoading={isWeChatSubmitting}
       />
@@ -349,74 +369,113 @@ export function UserAuthForm({
         className={cn('grid gap-4', className)}
         {...props}
       >
+        {invitationRegistration && (
+          <div className='space-y-2'>
+            <Label htmlFor='registration-invitation-code'>
+              {t('Registration code')}
+            </Label>
+            <Input
+              id='registration-invitation-code'
+              value={registrationCode}
+              onChange={(event) => setRegistrationCode(event.target.value)}
+              autoComplete='off'
+              maxLength={128}
+              spellCheck={false}
+            />
+            <p className='text-muted-foreground text-xs'>
+              {t(
+                'Enter an invitation, then continue with Discord. Server blacklists always apply.'
+              )}
+            </p>
+          </div>
+        )}
         {hasAlternativeLogin && alternativeLoginMethods}
 
         {passwordLoginEnabled && (
-          <>
-            {/* Username Field */}
-            <FormField
-              control={form.control}
-              name='username'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Username or Email')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('Enter your username or email')}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Password Field */}
-            <FormField
-              control={form.control}
-              name='password'
-              render={({ field }) => (
-                <FormItem className='relative'>
-                  <FormLabel>{t('Password')}</FormLabel>
-                  <FormControl>
-                    <PasswordInput
-                      placeholder={t('Enter password')}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  <Link
-                    to='/forgot-password'
-                    className='text-muted-foreground absolute end-0 -top-0.5 z-10 text-sm font-medium hover:opacity-75'
-                  >
-                    {t('Forgot password?')}
-                  </Link>
-                </FormItem>
-              )}
-            />
-
-            {/* Submit Button */}
-            <Button
-              type='submit'
-              className='mt-2 w-full justify-center gap-2'
-              disabled={isLoading}
-            >
-              {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
-              {t('Sign in')}
-            </Button>
-
-            {/* Turnstile */}
-            {isTurnstileEnabled && (
-              <div className='mt-2'>
-                <Turnstile
-                  key={turnstileWidgetKey}
-                  siteKey={turnstileSiteKey}
-                  onVerify={setTurnstileToken}
-                  onExpire={() => setTurnstileToken('')}
-                />
-              </div>
+          <Collapsible
+            open={
+              !collapsePasswordLogin ||
+              !status?.discord_oauth ||
+              passwordExpanded
+            }
+            onOpenChange={setPasswordExpanded}
+          >
+            {collapsePasswordLogin && status?.discord_oauth && (
+              <CollapsibleTrigger
+                render={
+                  <Button type='button' variant='ghost' className='w-full' />
+                }
+              >
+                <KeyRound aria-hidden='true' />
+                {t('Password sign-in')}
+              </CollapsibleTrigger>
             )}
-          </>
+            <CollapsibleContent className='grid gap-4'>
+              {/* Username Field */}
+              <FormField
+                control={form.control}
+                name='username'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Username or Email')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('Enter your username or email')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Password Field */}
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem className='relative'>
+                    <FormLabel>{t('Password')}</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder={t('Enter password')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <Link
+                      to='/forgot-password'
+                      className='text-muted-foreground absolute end-0 -top-0.5 z-10 text-sm font-medium hover:opacity-75'
+                    >
+                      {t('Forgot password?')}
+                    </Link>
+                  </FormItem>
+                )}
+              />
+
+              {/* Submit Button */}
+              <Button
+                type='submit'
+                className='mt-2 w-full justify-center gap-2'
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
+                {t('Sign in')}
+              </Button>
+
+              {/* Turnstile */}
+              {isTurnstileEnabled && (
+                <div className='mt-2'>
+                  <Turnstile
+                    key={turnstileWidgetKey}
+                    siteKey={turnstileSiteKey}
+                    onVerify={setTurnstileToken}
+                    onExpire={() => setTurnstileToken('')}
+                  />
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         <LegalConsent

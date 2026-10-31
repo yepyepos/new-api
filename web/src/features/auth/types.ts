@@ -98,6 +98,8 @@ export interface SystemStatus {
     github_client_id?: string
     discord_oauth?: boolean
     discord_client_id?: string
+    discord_guild_check?: boolean
+    discord_only_login?: boolean
     oidc_enabled?: boolean
     oidc_authorization_endpoint?: string
     oidc_client_id?: string
@@ -145,6 +147,8 @@ export interface SystemStatus {
   github_client_id?: string
   discord_oauth?: boolean
   discord_client_id?: string
+  discord_guild_check?: boolean
+  discord_only_login?: boolean
   oidc_enabled?: boolean
   oidc_authorization_endpoint?: string
   oidc_client_id?: string
@@ -166,6 +170,7 @@ export interface SystemStatus {
   turnstile_site_key?: string
   email_verification?: boolean
   self_use_mode_enabled?: boolean
+  public_benefit_mode_enabled?: boolean
   display_in_currency?: boolean
   display_token_stat_enabled?: boolean
   quota_per_unit?: number
@@ -218,4 +223,6 @@ export interface CustomOAuthProviderInfo {
 
 export interface AuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
   redirectTo?: string
+  invitationRegistration?: boolean
+  collapsePasswordLogin?: boolean
 }

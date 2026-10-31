@@ -171,6 +171,11 @@ export type AuthSettings = {
   'discord.enabled': boolean
   'discord.client_id': string
   'discord.client_secret': string
+  'discord.guild_id': string
+  'discord.role_ids': string
+  'discord.role_match_mode': 'any' | 'all'
+  'discord.only_login': boolean
+  'discord.blocked_guild_ids': string
   'oidc.enabled': boolean
   'oidc.display_name': string
   'oidc.client_id': string
@@ -355,6 +360,10 @@ export type BillingSettings = {
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number
+  'checkin_setting.quota': number
+  'checkin_setting.threshold_enabled': boolean
+  'checkin_setting.balance_threshold': number
+  'checkin_setting.timezone': string
 }
 
 export type OperationsSettings = {

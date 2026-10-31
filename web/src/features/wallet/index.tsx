@@ -20,11 +20,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
+import { LoadingState } from '@/components/loading-state'
 import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
 
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
+import { CommunityQuota } from './components/community-quota'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
 import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
@@ -60,6 +62,13 @@ interface WalletProps {
 }
 
 export function Wallet(props: WalletProps) {
+  const { status } = useStatus()
+  if (!status) return <LoadingState />
+  if (status.public_benefit_mode_enabled) return <CommunityQuota />
+  return <CommercialWallet {...props} />
+}
+
+function CommercialWallet(props: WalletProps) {
   const { t } = useTranslation()
   const [user, setUser] = useState<UserWalletData | null>(null)
   const [userLoading, setUserLoading] = useState(true)

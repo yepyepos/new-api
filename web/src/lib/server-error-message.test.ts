@@ -19,6 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 import i18next from 'i18next'
 import { describe, expect, test } from 'vitest'
 
+import zh from '@/i18n/locales/zh.json'
+
 import {
   getServerErrorMessage,
   getServerErrorMessageKey,
@@ -26,6 +28,33 @@ import {
 } from './server-error-message'
 
 describe('server error message mapping', () => {
+  test('translates a commercial-feature rejection instead of displaying raw backend English', async () => {
+    i18next.addResourceBundle('zh', 'translation', zh.translation)
+    await i18next.changeLanguage('zh')
+    try {
+      expect(
+        getServerErrorMessage({
+          code: 'COMMERCIAL_FEATURES_DISABLED',
+          message:
+            'Paid and referral features are disabled on this community site.',
+        })
+      ).toBe('本站为公益站，收费及推广功能已关闭。')
+    } finally {
+      await i18next.changeLanguage('en')
+      i18next.removeResourceBundle('zh', 'translation')
+    }
+  })
+
+  test('explains the Discord-only login restriction without exposing server details', () => {
+    expect(
+      getServerErrorMessageKey({
+        code: 'DISCORD_LOGIN_REQUIRED',
+        message: 'private server detail',
+      })
+    ).toBe(
+      'Please sign in with Discord. Other sign-in methods are reserved for administrators.'
+    )
+  })
   test('maps the active-session limit to recovery instructions', () => {
     const message = getServerErrorMessageKey({ code: 'AUTH_SESSION_LIMIT' })
 

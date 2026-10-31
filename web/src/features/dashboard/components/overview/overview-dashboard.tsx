@@ -51,6 +51,7 @@ import { IconBadge, type IconBadgeTone } from '@/components/ui/icon-badge'
 import { fetchTokenKey, getApiKeys } from '@/features/keys/api'
 import type { ApiKey } from '@/features/keys/types'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import { usePublicBenefitMode } from '@/hooks/use-public-benefit-mode'
 import { getUserModels } from '@/lib/api'
 import { handleServerError } from '@/lib/handle-server-error'
 import { MOTION_TRANSITION } from '@/lib/motion'
@@ -462,6 +463,7 @@ function CompactQuickAction(props: { action: QuickAction }) {
 
 export function OverviewDashboard() {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
   const setupGuideId = useId()
   const setupGuideToggleRef = useRef<HTMLButtonElement>(null)
   const user = useAuthStore((state) => state.auth.user)
@@ -514,8 +516,10 @@ export function OverviewDashboard() {
         completed: Boolean(preferredKey),
       },
       {
-        title: t('Add credits'),
-        description: t('Keep enough balance before production traffic'),
+        title: publicBenefitMode ? t('Claim free quota') : t('Add credits'),
+        description: publicBenefitMode
+          ? t('Daily check-ins provide free quota for community use.')
+          : t('Keep enough balance before production traffic'),
         to: '/wallet',
         icon: CreditCard,
         completed: remainQuota > 0 || usedQuota > 0,
@@ -528,7 +532,7 @@ export function OverviewDashboard() {
         completed: requestCount > 0,
       },
     ],
-    [preferredKey, remainQuota, requestCount, t, usedQuota]
+    [preferredKey, remainQuota, requestCount, t, usedQuota, publicBenefitMode]
   )
 
   const quickActions = useMemo<QuickAction[]>(

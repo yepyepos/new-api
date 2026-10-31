@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import useDialogState from '@/hooks/use-dialog'
+import { usePublicBenefitMode } from '@/hooks/use-public-benefit-mode'
 import { useIsSidebarModuleVisible } from '@/hooks/use-sidebar-config'
 import { useUserDisplay } from '@/hooks/use-user-display'
 import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
@@ -41,6 +42,7 @@ import { useAuthStore } from '@/stores/auth-store'
 const avatarFallbackClassName = 'font-semibold text-white'
 
 export function ProfileDropdown() {
+  const publicBenefitMode = usePublicBenefitMode()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [open, setOpen] = useDialogState()
@@ -118,7 +120,7 @@ export function ProfileDropdown() {
           {isWalletVisible && (
             <DropdownMenuItem onClick={() => navigate({ to: '/wallet' })}>
               <Wallet className='size-4' />
-              {t('Wallet')}
+              {publicBenefitMode ? t('Quota Center') : t('Wallet')}
             </DropdownMenuItem>
           )}
 

@@ -20,10 +20,12 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 
 import { AuthenticatedLayout } from '@/components/layout'
 import { resolveAuthentication } from '@/lib/auth-session'
+import { isCommercialPage } from '@/lib/community-mode'
+import { ensureStatus } from '@/lib/status-query'
 import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/_authenticated')({
-  beforeLoad: async ({ location }) => {
+  beforeLoad: async ({ location, context }) => {
     // The root guard may have skipped its refresh because no session hint was
     // present. That skip is an optimization for public pages and must not
     // decide a protected route, so resolve against the server before
@@ -37,6 +39,13 @@ export const Route = createFileRoute('/_authenticated')({
         to: '/sign-in',
         search: { redirect: location.href },
       })
+    }
+    const status = await ensureStatus(context.queryClient)
+    if (
+      status?.public_benefit_mode_enabled &&
+      isCommercialPage(location.pathname)
+    ) {
+      throw redirect({ to: '/wallet' })
     }
   },
   component: AuthenticatedLayout,

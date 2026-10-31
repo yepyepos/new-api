@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/tooltip'
 import type { AdminUserManageAction } from '@/features/auth/secure-verification'
 import { UserSubscriptionsDialog } from '@/features/subscriptions/components/dialogs/user-subscriptions-dialog'
+import { usePublicBenefitMode } from '@/hooks/use-public-benefit-mode'
 import { handleServerError } from '@/lib/handle-server-error'
 import { AuthOperationError } from '@/lib/secure-verification'
 
@@ -76,6 +77,7 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { t } = useTranslation()
+  const publicBenefitMode = usePublicBenefitMode()
   const user = row.original
   const {
     setOpen,
@@ -263,17 +265,19 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </DropdownMenuShortcut>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onSelect={(event) => {
-            event.preventDefault()
-            setSubscriptionsDialogOpen(true)
-          }}
-        >
-          {t('Manage Subscriptions')}
-          <DropdownMenuShortcut>
-            <CreditCard size={16} />
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
+        {!publicBenefitMode && (
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault()
+              setSubscriptionsDialogOpen(true)
+            }}
+          >
+            {t('Manage Subscriptions')}
+            <DropdownMenuShortcut>
+              <CreditCard size={16} />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator />
 

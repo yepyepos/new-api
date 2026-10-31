@@ -23,8 +23,14 @@ import { BotProtectionSection } from './bot-protection-section'
 import { CustomOAuthSection } from './custom-oauth/custom-oauth-section'
 import { OAuthSection } from './oauth-section'
 import { PasskeySection } from './passkey-section'
+import { RegistrationAdmissionSection } from './registration-admission-section'
 
 const AUTH_SECTIONS = [
+  {
+    id: 'registration',
+    titleKey: 'Registration admission',
+    build: () => <RegistrationAdmissionSection />,
+  },
   {
     id: 'basic-auth',
     titleKey: 'Basic Authentication',
@@ -55,6 +61,11 @@ const AUTH_SECTIONS = [
           'discord.enabled': settings['discord.enabled'],
           'discord.client_id': settings['discord.client_id'],
           'discord.client_secret': settings['discord.client_secret'],
+          'discord.guild_id': settings['discord.guild_id'],
+          'discord.role_ids': settings['discord.role_ids'],
+          'discord.role_match_mode': settings['discord.role_match_mode'],
+          'discord.only_login': settings['discord.only_login'],
+          'discord.blocked_guild_ids': settings['discord.blocked_guild_ids'],
           'oidc.enabled': settings['oidc.enabled'],
           'oidc.display_name': settings['oidc.display_name'],
           'oidc.client_id': settings['oidc.client_id'],

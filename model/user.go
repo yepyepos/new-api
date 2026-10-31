@@ -541,6 +541,9 @@ func GetSelfUserById(id int) (*User, error) {
 }
 
 func GetUserIdByAffCode(affCode string) (int, error) {
+	if operation_setting.PublicBenefitModeEnabled {
+		return 0, nil
+	}
 	if affCode == "" {
 		return 0, errors.New("affiliate code is empty")
 	}

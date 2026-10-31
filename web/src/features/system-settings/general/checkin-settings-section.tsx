@@ -19,7 +19,6 @@ For commercial licensing, please contact support@quantumnous.com
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, type Resolver } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { z } from 'zod'
 
 import {
@@ -33,6 +32,10 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import {
+  DEFAULT_CURRENCY_CONFIG,
+  useSystemConfigStore,
+} from '@/stores/system-config-store'
 
 import {
   SettingsForm,
@@ -43,71 +46,79 @@ import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
 
-const schema = z.object({
-  enabled: z.boolean(),
-  minQuota: z.coerce.number().int().min(0),
-  maxQuota: z.coerce.number().int().min(0),
-})
+type Values = {
+  enabled: boolean
+  quota: number
+  thresholdEnabled: boolean
+  balanceThreshold: number
+  timezone: string
+}
 
-type Values = z.infer<typeof schema>
-
-export function CheckinSettingsSection({
-  defaultValues,
-}: {
-  defaultValues: {
-    enabled: boolean
-    minQuota: number
-    maxQuota: number
-  }
-}) {
+export function CheckinSettingsSection(props: { defaultValues: Values }) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
-
+  const configuredQuotaPerUnit = useSystemConfigStore(
+    (state) => state.config.currency.quotaPerUnit
+  )
+  const quotaPerUnit =
+    Number.isFinite(configuredQuotaPerUnit) && configuredQuotaPerUnit > 0
+      ? configuredQuotaPerUnit
+      : DEFAULT_CURRENCY_CONFIG.quotaPerUnit
+  const schema = z.object({
+    enabled: z.boolean(),
+    quota: z.coerce
+      .number()
+      .min(1 / quotaPerUnit)
+      .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
+      .refine(
+        (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
+        t('Please enter a valid number')
+      ),
+    thresholdEnabled: z.boolean(),
+    balanceThreshold: z.coerce
+      .number()
+      .min(0)
+      .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
+      .refine(
+        (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
+        t('Please enter a valid number')
+      ),
+    timezone: z.string().min(1),
+  })
   const form = useForm<Values>({
-    resolver: zodResolver(schema) as unknown as Resolver<Values>,
+    resolver: zodResolver(schema) as Resolver<Values>,
     defaultValues: {
-      enabled: defaultValues.enabled,
-      minQuota: defaultValues.minQuota,
-      maxQuota: defaultValues.maxQuota,
+      ...props.defaultValues,
+      quota: props.defaultValues.quota / quotaPerUnit,
+      balanceThreshold: props.defaultValues.balanceThreshold / quotaPerUnit,
     },
   })
-
-  const { isDirty, isSubmitting } = form.formState
-  const enabled = form.watch('enabled')
+  const pending = updateOption.isPending || form.formState.isSubmitting
 
   async function onSubmit(values: Values) {
-    const updates: Array<{ key: string; value: string }> = []
-
-    if (values.enabled !== defaultValues.enabled) {
-      updates.push({
-        key: 'checkin_setting.enabled',
-        value: String(values.enabled),
-      })
+    // Only the editor uses USD; retain the stored quota API and untouched amounts.
+    const storedValues = { ...values }
+    for (const field of ['quota', 'balanceThreshold'] as const) {
+      storedValues[field] =
+        values[field] === props.defaultValues[field] / quotaPerUnit
+          ? props.defaultValues[field]
+          : Math.round(values[field] * quotaPerUnit)
     }
-
-    if (values.minQuota !== defaultValues.minQuota) {
-      updates.push({
-        key: 'checkin_setting.min_quota',
-        value: String(values.minQuota),
-      })
+    const keys = {
+      enabled: 'enabled',
+      quota: 'quota',
+      thresholdEnabled: 'threshold_enabled',
+      balanceThreshold: 'balance_threshold',
+      timezone: 'timezone',
+    } as const
+    for (const field of Object.keys(keys) as (keyof Values)[]) {
+      if (storedValues[field] !== props.defaultValues[field]) {
+        await updateOption.mutateAsync({
+          key: `checkin_setting.${keys[field]}`,
+          value: String(storedValues[field]),
+        })
+      }
     }
-
-    if (values.maxQuota !== defaultValues.maxQuota) {
-      updates.push({
-        key: 'checkin_setting.max_quota',
-        value: String(values.maxQuota),
-      })
-    }
-
-    if (updates.length === 0) {
-      toast.info(t('No changes to save'))
-      return
-    }
-
-    for (const update of updates) {
-      await updateOption.mutateAsync(update)
-    }
-
     form.reset(values)
   }
 
@@ -117,8 +128,8 @@ export function CheckinSettingsSection({
         <SettingsForm onSubmit={form.handleSubmit(onSubmit)} autoComplete='off'>
           <SettingsPageFormActions
             onSave={form.handleSubmit(onSubmit)}
-            isSaving={updateOption.isPending || isSubmitting}
-            isSaveDisabled={!isDirty}
+            isSaving={pending}
+            isSaveDisabled={!form.formState.isDirty}
             saveLabel='Save check-in settings'
           />
           <FormField
@@ -130,7 +141,7 @@ export function CheckinSettingsSection({
                   <FormLabel>{t('Enable check-in feature')}</FormLabel>
                   <FormDescription>
                     {t(
-                      'Allow users to check in daily for random quota rewards'
+                      'One successful check-in per site day. Unused chances do not carry over.'
                     )}
                   </FormDescription>
                 </SettingsSwitchContent>
@@ -138,60 +149,104 @@ export function CheckinSettingsSection({
                   <Switch
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    disabled={updateOption.isPending || isSubmitting}
+                    disabled={pending}
                   />
                 </FormControl>
               </SettingsSwitchItem>
             )}
           />
-
-          {enabled && (
-            <div className='grid gap-6 sm:grid-cols-2'>
-              <FormField
-                control={form.control}
-                name='minQuota'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Minimum check-in quota')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='number'
-                        min={0}
-                        placeholder={t('1000')}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('Minimum quota amount awarded for check-in')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='maxQuota'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Maximum check-in quota')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='number'
-                        min={0}
-                        placeholder={t('10000')}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('Maximum quota amount awarded for check-in')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
+          <div className='grid gap-6 sm:grid-cols-2'>
+            <FormField
+              control={form.control}
+              name='quota'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Fixed check-in reward (USD)')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min={1 / quotaPerUnit}
+                      max={Number.MAX_SAFE_INTEGER / quotaPerUnit}
+                      step='any'
+                      {...field}
+                      disabled={pending}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t(
+                      'Enter USD. Saved automatically as internal quota units; the full reward can exceed the balance threshold.'
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='timezone'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Check-in timezone')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder='Asia/Hong_Kong'
+                      disabled={pending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <FormField
+            control={form.control}
+            name='thresholdEnabled'
+            render={({ field }) => (
+              <SettingsSwitchItem>
+                <SettingsSwitchContent>
+                  <FormLabel>{t('Limit check-in by balance')}</FormLabel>
+                  <FormDescription>
+                    {t(
+                      'A balance above the threshold blocks the claim without using the daily chance.'
+                    )}
+                  </FormDescription>
+                </SettingsSwitchContent>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={pending}
+                  />
+                </FormControl>
+              </SettingsSwitchItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='balanceThreshold'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Check-in balance threshold (USD)')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={0}
+                    max={Number.MAX_SAFE_INTEGER / quotaPerUnit}
+                    step='any'
+                    {...field}
+                    disabled={pending}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Enter USD. A balance equal to the threshold is eligible.'
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </SettingsForm>
       </Form>
     </SettingsSection>

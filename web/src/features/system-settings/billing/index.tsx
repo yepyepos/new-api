@@ -107,6 +107,10 @@ const defaultBillingSettings: BillingSettings = {
   'checkin_setting.enabled': false,
   'checkin_setting.min_quota': 1000,
   'checkin_setting.max_quota': 10000,
+  'checkin_setting.quota': 1000,
+  'checkin_setting.threshold_enabled': false,
+  'checkin_setting.balance_threshold': 0,
+  'checkin_setting.timezone': 'Asia/Hong_Kong',
 }
 
 export function BillingSettings() {

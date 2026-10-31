@@ -175,7 +175,8 @@ export async function createOAuthAuthorization(
   intent: 'login' | 'bind' | 'verify',
   operation?: VerificationOperation,
   signal?: AbortSignal,
-  proofToken?: string
+  proofToken?: string,
+  registrationInviteCode?: string
 ): Promise<{ state: string; authorizationUrl?: string }> {
   const aff = intent === 'login' ? getAffiliateCode() : ''
   const res = await api.post(
@@ -184,6 +185,9 @@ export async function createOAuthAuthorization(
       provider,
       intent,
       aff: aff || undefined,
+      ...(provider === 'discord' && intent === 'login' && registrationInviteCode
+        ? { invite_code: registrationInviteCode.trim() }
+        : {}),
       scope: operation?.scope,
       ...(operation?.context ? { context: operation.context } : {}),
     },

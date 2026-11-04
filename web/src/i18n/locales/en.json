@@ -7484,6 +7484,23 @@
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
     "Zoom": "Zoom",
+    "API and console access will resume once the site reopens.": "API and console access will resume once the site reopens.",
+    "API requests stop immediately and users are locked out of the console. Administrators keep access.": "API requests stop immediately and users are locked out of the console. Administrators keep access.",
+    "Close the site": "Close the site",
+    "Close the site now?": "Close the site now?",
+    "Closed since {{time}}": "Closed since {{time}}",
+    "Closure notice": "Closure notice",
+    "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.": "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.",
+    "Every user, including you, will have to sign in again. API keys keep working.": "Every user, including you, will have to sign in again. API keys keep working.",
+    "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.": "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.",
+    "Save and close the site": "Save and close the site",
+    "Sign out all users": "Sign out all users",
+    "Sign out all users?": "Sign out all users?",
+    "Sign out everyone": "Sign out everyone",
+    "Site Closure": "Site Closure",
+    "The site is temporarily closed": "The site is temporarily closed",
+    "We are performing scheduled maintenance and expect to be back shortly.": "We are performing scheduled maintenance and expect to be back shortly.",
+    "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.": "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.",
     "Administrators and the root account keep their API keys. Turn this off to include them as well.": "Administrators and the root account keep their API keys. Turn this off to include them as well.",
     "All API Tokens": "All API Tokens",
     "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.": "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.",
@@ -7517,6 +7534,7 @@
     "User API Keys": "User API Keys",
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.",
     "e.g. 1, 7, 42": "e.g. 1, 7, 42",
-    "token name": "token name"
+    "token name": "token name",
+    "Save closure notice": "Save closure notice"
   }
 }

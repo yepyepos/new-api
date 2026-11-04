@@ -7484,6 +7484,23 @@
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
     "Zoom": "Zoom",
+    "API and console access will resume once the site reopens.": "Quyền truy cập API và bảng điều khiển sẽ được khôi phục khi trang mở lại.",
+    "API requests stop immediately and users are locked out of the console. Administrators keep access.": "Các yêu cầu API dừng ngay lập tức và người dùng bị chặn khỏi bảng điều khiển. Quản trị viên vẫn truy cập được.",
+    "Close the site": "Đóng trang",
+    "Close the site now?": "Đóng trang ngay bây giờ?",
+    "Closed since {{time}}": "Đã đóng từ {{time}}",
+    "Closure notice": "Thông báo đóng trang",
+    "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.": "Kết thúc mọi phiên bảng điều khiển và vô hiệu hóa các access token đã cấp. API key vẫn hoạt động.",
+    "Every user, including you, will have to sign in again. API keys keep working.": "Mọi người dùng, kể cả bạn, sẽ phải đăng nhập lại. API key vẫn hoạt động.",
+    "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.": "Hỗ trợ Markdown. Nội dung được hiển thị trên trang đóng và được nối vào thông báo 503 mà máy khách API nhận được.",
+    "Save and close the site": "Lưu và đóng trang",
+    "Sign out all users": "Đăng xuất tất cả người dùng",
+    "Sign out all users?": "Đăng xuất tất cả người dùng?",
+    "Sign out everyone": "Đăng xuất mọi người",
+    "Site Closure": "Đóng trang",
+    "The site is temporarily closed": "Trang đang tạm thời đóng",
+    "We are performing scheduled maintenance and expect to be back shortly.": "Chúng tôi đang bảo trì theo kế hoạch và sẽ trở lại ngay.",
+    "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.": "Trong thời gian đóng, yêu cầu API trả về 503, người dùng không thể đăng nhập và mọi trang chỉ hiển thị thông báo bên dưới. Quản trị viên vẫn truy cập được.",
     "Administrators and the root account keep their API keys. Turn this off to include them as well.": "Quản trị viên và tài khoản root giữ nguyên API key. Tắt tùy chọn này để bao gồm cả họ.",
     "All API Tokens": "Tất cả API key",
     "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.": "Các máy khách dùng {{count}} API key này sẽ nhận ngay 401 Unauthorized. Đây là xóa mềm và có thể khôi phục từ cơ sở dữ liệu.",
@@ -7517,6 +7534,7 @@
     "User API Keys": "API key của người dùng",
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "Khi bật, mọi API key bị vô hiệu hóa mỗi ngày một lần vào thời điểm đã đặt. Người dùng phải tạo key mới để tiếp tục. Không thể hoàn tác.",
     "e.g. 1, 7, 42": "ví dụ 1, 7, 42",
-    "token name": "tên key"
+    "token name": "tên key",
+    "Save closure notice": "Lưu thông báo đóng trang"
   }
 }

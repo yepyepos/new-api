@@ -148,6 +148,15 @@ func recordLoginAudit(user *model.User, c *gin.Context) {
 // pending legacy GitHub binding rewrite travels inside the challenge and is
 // written only when the verification completes.
 func setupLogin(user *model.User, migration *service.LegacyGitHubMigration, c *gin.Context) {
+	// A closed site must keep ordinary users out of the console, not merely hide
+	// the navigation. The check runs before the verification challenge so a user
+	// with 2FA enabled is refused here instead of being handed a challenge that
+	// would end in a session. Administrators are exempt so the operator can
+	// reopen the site.
+	if user != nil && service.SiteClosureDeniesUser(user.Id) {
+		writeSiteClosureLoginError(c)
+		return
+	}
 	challenge, err := service.StartLoginVerification(user, loginMethodFromContext(c), migration)
 	if err != nil {
 		writeSecurityOperationError(c, err)
@@ -164,6 +173,12 @@ func setupLogin(user *model.User, migration *service.LegacyGitHubMigration, c *g
 func setupLoginAtAuthVersion(user *model.User, expectedAuthVersion int64, c *gin.Context) {
 	if user == nil || user.Id <= 0 || user.Status != common.UserStatusEnabled {
 		common.ApiErrorT(c, "User has been banned")
+		return
+	}
+	// A closed site must keep ordinary users out of the console, not just hide
+	// the navigation. Administrators are exempt so the operator can reopen it.
+	if service.SiteClosureDeniesUser(user.Id) {
+		writeSiteClosureLoginError(c)
 		return
 	}
 	currentUser, err := model.GetSelfUserById(user.Id)
@@ -215,6 +230,12 @@ func writeLoginResponse(c *gin.Context, user *model.User, bundle *service.AuthBu
 }
 
 func Register(c *gin.Context) {
+	// A closed site accepts no new accounts. Creating one would hand out a
+	// dashboard session the closure is supposed to prevent.
+	if operation_setting.IsSiteClosed() {
+		writeSiteClosureLoginError(c)
+		return
+	}
 	if err := service.RequireDiscordLogin(common.RoleCommonUser, "password"); err != nil {
 		writeSecurityOperationError(c, err)
 		return

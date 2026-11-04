@@ -7484,6 +7484,23 @@
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V 4",
     "Zoom": "ズーム",
+    "API and console access will resume once the site reopens.": "サイトが再開されると、API とコンソールのアクセスが復旧します。",
+    "API requests stop immediately and users are locked out of the console. Administrators keep access.": "API リクエストは直ちに停止し、一般ユーザーはコンソールから締め出されます。管理者は引き続きアクセスできます。",
+    "Close the site": "サイトを閉鎖",
+    "Close the site now?": "今すぐサイトを閉鎖しますか？",
+    "Closed since {{time}}": "{{time}} から閉鎖中",
+    "Closure notice": "閉鎖のお知らせ",
+    "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.": "すべてのダッシュボードセッションを終了し、発行済みのアクセストークンを無効にします。API キーは引き続き使用できます。",
+    "Every user, including you, will have to sign in again. API keys keep working.": "あなたを含むすべてのユーザーが再ログインする必要があります。API キーは引き続き使用できます。",
+    "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.": "Markdown に対応しています。閉鎖ページに表示され、API クライアントが受け取る 503 メッセージにも付加されます。",
+    "Save and close the site": "保存してサイトを閉鎖",
+    "Sign out all users": "全ユーザーをログアウト",
+    "Sign out all users?": "全ユーザーをログアウトしますか？",
+    "Sign out everyone": "全員をログアウト",
+    "Site Closure": "サイト閉鎖",
+    "The site is temporarily closed": "サイトは一時的に閉鎖されています",
+    "We are performing scheduled maintenance and expect to be back shortly.": "定期メンテナンスを実施しています。まもなく再開します。",
+    "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.": "閉鎖中は API リクエストが 503 を返し、一般ユーザーはログインできず、すべてのページに以下のお知らせが表示されます。管理者は引き続きアクセスできます。",
     "Administrators and the root account keep their API keys. Turn this off to include them as well.": "管理者と root アカウントの API キーは保持されます。オフにするとこれらも対象になります。",
     "All API Tokens": "すべての API キー",
     "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.": "これらの {{count}} 個の API キーを使用しているクライアントは、直ちに 401 Unauthorized を受け取ります。これは論理削除であり、データベースから復元できます。",
@@ -7517,6 +7534,7 @@
     "User API Keys": "ユーザーの API キー",
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "有効にすると、設定した時刻に毎日すべての API キーが無効になります。ユーザーは続行する前に新しいキーを作成する必要があります。この操作は元に戻せません。",
     "e.g. 1, 7, 42": "例: 1, 7, 42",
-    "token name": "キー名"
+    "token name": "キー名",
+    "Save closure notice": "閉鎖のお知らせを保存"
   }
 }

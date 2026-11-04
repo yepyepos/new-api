@@ -7484,6 +7484,23 @@
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
     "Zoom": "Zoom",
+    "API and console access will resume once the site reopens.": "L'accès à l'API et à la console reprendra dès la réouverture du site.",
+    "API requests stop immediately and users are locked out of the console. Administrators keep access.": "Les requêtes API s'arrêtent immédiatement et les utilisateurs sont bloqués hors de la console. Les administrateurs conservent l'accès.",
+    "Close the site": "Fermer le site",
+    "Close the site now?": "Fermer le site maintenant ?",
+    "Closed since {{time}}": "Fermé depuis {{time}}",
+    "Closure notice": "Avis de fermeture",
+    "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.": "Met fin à toutes les sessions du tableau de bord et invalide les jetons d'accès déjà émis. Les clés API continuent de fonctionner.",
+    "Every user, including you, will have to sign in again. API keys keep working.": "Tous les utilisateurs, vous compris, devront se reconnecter. Les clés API continuent de fonctionner.",
+    "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.": "Le Markdown est pris en charge. Il est affiché sur la page de fermeture et ajouté au message 503 reçu par les clients API.",
+    "Save and close the site": "Enregistrer et fermer le site",
+    "Sign out all users": "Déconnecter tous les utilisateurs",
+    "Sign out all users?": "Déconnecter tous les utilisateurs ?",
+    "Sign out everyone": "Tout déconnecter",
+    "Site Closure": "Fermeture du site",
+    "The site is temporarily closed": "Le site est temporairement fermé",
+    "We are performing scheduled maintenance and expect to be back shortly.": "Nous effectuons une maintenance planifiée et serons de retour très bientôt.",
+    "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.": "Pendant la fermeture, les requêtes API renvoient 503, les utilisateurs ne peuvent pas se connecter et toutes les pages affichent l'avis ci-dessous. Les administrateurs conservent l'accès.",
     "Administrators and the root account keep their API keys. Turn this off to include them as well.": "Les administrateurs et le compte root conservent leurs clés API. Désactivez cette option pour les inclure également.",
     "All API Tokens": "Toutes les clés API",
     "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.": "Les clients utilisant ces {{count}} clés API recevront immédiatement 401 Unauthorized. Il s'agit d'une suppression logique, récupérable depuis la base de données.",
@@ -7517,6 +7534,7 @@
     "User API Keys": "Clés API de l'utilisateur",
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "Une fois activé, toutes les clés API sont invalidées une fois par jour à l'heure configurée. Les utilisateurs doivent créer une nouvelle clé pour continuer. Cette action est irréversible.",
     "e.g. 1, 7, 42": "ex. 1, 7, 42",
-    "token name": "nom de la clé"
+    "token name": "nom de la clé",
+    "Save closure notice": "Enregistrer l'avis de fermeture"
   }
 }

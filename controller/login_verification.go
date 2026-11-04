@@ -152,6 +152,16 @@ func completeVerifiedLoginResponse(c *gin.Context, bundle *service.AuthBundle, m
 		writeAuthSessionError(c, err)
 		return
 	}
+	// A challenge opened before the site closed can still complete afterwards.
+	// The session was just created, so drop it rather than let the closure leak
+	// one logged-in user through.
+	if service.SiteClosureDeniesUser(identity.UserID) {
+		if _, revokeErr := model.RevokeUserSession(identity.UserID, identity.SessionID, "site_closed"); revokeErr != nil {
+			common.SysLog(common.LogText("failed to revoke session issued during site closure: %s", revokeErr.Error()))
+		}
+		writeSiteClosureLoginError(c)
+		return
+	}
 	user, err := model.GetSelfUserById(identity.UserID)
 	if err != nil {
 		writeAuthSessionError(c, err)

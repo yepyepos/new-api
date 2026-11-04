@@ -31,6 +31,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/models", middleware.UserAuth(), controller.DashboardListModels)
 		apiRouter.GET("/status/test", middleware.AdminAuth(), controller.TestStatus)
 		apiRouter.GET("/notice", controller.GetNotice)
+		apiRouter.GET("/site-closure", middleware.DisableCache(), controller.GetSiteClosure)
 		apiRouter.GET("/user-agreement", controller.GetUserAgreement)
 		apiRouter.GET("/privacy-policy", controller.GetPrivacyPolicy)
 		apiRouter.GET("/about", controller.GetAbout)
@@ -312,6 +313,20 @@ func SetApiRouter(router *gin.Engine) {
 			adminTokenRoute.GET("/", controller.AdminListTokens)
 			adminTokenRoute.POST("/batch", controller.AdminDeleteTokensBatch)
 			adminTokenRoute.DELETE("/:id", controller.AdminDeleteTokenById)
+		}
+
+		// Admin 全站登出：一次性失效所有用户的登录会话
+		adminSessionRoute := apiRouter.Group("/admin/sessions")
+		adminSessionRoute.Use(middleware.RootAuth(), middleware.DisableCache())
+		{
+			adminSessionRoute.DELETE("/", controller.RevokeAllLoginSessions)
+		}
+
+		// 一键闭站 / 开站，只允许 root 操作
+		adminClosureRoute := apiRouter.Group("/admin/site-closure")
+		adminClosureRoute.Use(middleware.RootAuth(), middleware.DisableCache())
+		{
+			adminClosureRoute.PUT("/", controller.SetSiteClosure)
 		}
 
 		usageRoute := apiRouter.Group("/usage")

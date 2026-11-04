@@ -34,6 +34,8 @@ import { saveAffiliateCode } from '@/features/auth/lib/storage'
 import { GeneralError } from '@/features/errors/general-error'
 import { NotFoundError } from '@/features/errors/not-found-error'
 import { getSetupStatus } from '@/features/setup/api'
+import { SiteClosurePage } from '@/features/site-closure/components/site-closure-page'
+import { useSiteClosure } from '@/features/site-closure/api'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import {
   bootstrapAuthentication,
@@ -42,6 +44,7 @@ import {
 } from '@/lib/auth-session'
 import { subscribeAuthSessionEvents } from '@/lib/auth-session-sync'
 import { resolveLegacyRoute } from '@/lib/legacy-route'
+import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
 function RootComponent() {
@@ -50,6 +53,16 @@ function RootComponent() {
 
   // Load system configuration (logo, system name, etc.) from backend
   useSystemConfig({ autoLoad: true })
+
+  // A closure has to reach tabs that are already open, so this polls rather
+  // than riding the cached status query.
+  const { closure } = useSiteClosure()
+  const role = useAuthStore((state) => state.auth.user?.role)
+  // Administrators keep the console while the site is closed: the switch that
+  // reopens it lives there, and locking the operator out would leave no way
+  // back in. Everyone else, signed in or not, sees only the notice.
+  const closureBlocksPage =
+    closure.closed && !(typeof role === 'number' && role >= ROLE.ADMIN)
 
   useEffect(() => {
     const aff = new URLSearchParams(window.location.search).get('aff')?.trim()
@@ -95,7 +108,7 @@ function RootComponent() {
   return (
     <ThemeCustomizationProvider>
       <NavigationProgress />
-      <Outlet />
+      {closureBlocksPage ? <SiteClosurePage closure={closure} /> : <Outlet />}
       <Toaster closeButton duration={5000} position='top-center' richColors />
       {import.meta.env.MODE === 'development' && (
         <>

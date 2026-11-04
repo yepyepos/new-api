@@ -22,6 +22,7 @@ import { MonitoringSettingsSection } from '../integrations/monitoring-settings-s
 import { WorkerSettingsSection } from '../integrations/worker-settings-section'
 import { LogSettingsSection } from '../maintenance/log-settings-section'
 import { PerformanceSection } from '../maintenance/performance-section'
+import { SiteClosureSection } from '../maintenance/site-closure-section'
 import { UpdateCheckerSection } from '../maintenance/update-checker-section'
 import type { OperationsSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
@@ -137,6 +138,13 @@ const OPERATIONS_SECTIONS = [
         }}
       />
     ),
+  },
+  {
+    id: 'site-closure',
+    titleKey: 'Site Closure',
+    // The closure switch is not an ordinary option: it reads and writes its own
+    // endpoint, so this section takes no props from the options form.
+    build: (_settings: OperationsSettings) => <SiteClosureSection />,
   },
   {
     id: 'update-checker',

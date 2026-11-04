@@ -7484,6 +7484,23 @@
     "Zhipu GLM": "智谱GLM",
     "Zhipu V4": "智谱 V4",
     "Zoom": "缩放",
+    "API and console access will resume once the site reopens.": "站点重新开放后，API 与控制台将恢复访问。",
+    "API requests stop immediately and users are locked out of the console. Administrators keep access.": "API 请求会立即停止，普通用户将被挡在控制台之外。管理员仍可访问。",
+    "Close the site": "关闭站点",
+    "Close the site now?": "现在关闭站点？",
+    "Closed since {{time}}": "自 {{time}} 起闭站",
+    "Closure notice": "闭站公告",
+    "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.": "结束所有控制台登录会话，并使已签发的访问令牌立即失效。API Key 不受影响。",
+    "Every user, including you, will have to sign in again. API keys keep working.": "所有用户（包括你）都需要重新登录。API Key 不受影响。",
+    "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.": "支持 Markdown。该内容会显示在闭站页面上，并追加到 API 客户端收到的 503 消息中。",
+    "Save and close the site": "保存并关闭站点",
+    "Sign out all users": "登出所有用户",
+    "Sign out all users?": "登出所有用户？",
+    "Sign out everyone": "全部登出",
+    "Site Closure": "闭站",
+    "The site is temporarily closed": "站点暂时关闭",
+    "We are performing scheduled maintenance and expect to be back shortly.": "我们正在进行计划内维护，预计很快恢复。",
+    "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.": "闭站期间，API 请求返回 503，普通用户无法登录，所有页面只显示下方公告。管理员仍可访问。",
     "Administrators and the root account keep their API keys. Turn this off to include them as well.": "管理员与超级管理员的 API Key 保留不动。关闭后它们也会被失效。",
     "All API Tokens": "全部 API Key",
     "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.": "使用这 {{count}} 个 API Key 的客户端会立即收到 401 未授权。这是软删除，可从数据库恢复。",
@@ -7517,6 +7534,7 @@
     "User API Keys": "用户 API Key",
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "开启后，每天到达指定时刻会失效全部 API Key，用户需自行重新创建才能继续使用。该操作不可撤销。",
     "e.g. 1, 7, 42": "例如 1, 7, 42",
-    "token name": "API Key 名称"
+    "token name": "API Key 名称",
+    "Save closure notice": "保存闭站公告"
   }
 }

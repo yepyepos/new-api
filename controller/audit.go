@@ -50,6 +50,8 @@ var auditContentTemplates = map[string]string{
 	"token.admin_delete":        "Deleted API token ${name} (ID: ${id}) of user #${target_user_id}",
 	"token.admin_batch_delete":  "Batch deleted ${count} API tokens across users: ${user_ids}",
 	"option.update":             "Updated system setting ${key}",
+	"option.site_closure":       "Changed site closure: closed=${enabled}",
+	"user.sessions_revoked_all": "Signed every user out: revoked ${revoked} sessions across ${users} users",
 
 	"option.passkey_domains":           "Updated Passkey domains: removed ${domains}; affected ${known}; unknown ${unknown}",
 	"option.passkey_domains_confirmed": "Confirmed removal of Passkey domains: ${domains}; affected ${known}; unknown ${unknown}",

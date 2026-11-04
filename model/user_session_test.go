@@ -653,3 +653,52 @@ func TestPasswordResetBumpsAuthVersionAndRevokesSessions(t *testing.T) {
 	assert.Equal(t, UserSessionStatusRevoked, storedSession.Status)
 	assert.Equal(t, "password_reset", storedSession.RevokedReason)
 }
+
+// A global sign-out has to reach every account at once, leave other users'
+// sessions alone only by having none, and advance each affected auth version so
+// access tokens already issued stop matching immediately.
+func TestRevokeAllActiveUserSessionsBumpsEveryAffectedAuthVersion(t *testing.T) {
+	setupUserSessionTest(t)
+	now := time.Now().Unix()
+	createUserSessionTestUser(t, 1101, 5)
+	createUserSessionTestUser(t, 1102, 7)
+	require.NoError(t, CreateUserSession(newTestUserSession("global-one", 1101, now)))
+	require.NoError(t, CreateUserSession(newTestUserSession("global-two", 1101, now)))
+	require.NoError(t, CreateUserSession(newTestUserSession("global-other", 1102, now)))
+	// Already-expired rows are not touched: only live sessions are worth
+	// revoking, and rewriting them would inflate the reported count.
+	require.NoError(t, CreateUserSession(newTestUserSession("global-expired", 1102, now)))
+	require.NoError(t, DB.Model(&UserSession{}).Where("sid = ?", "global-expired").
+		Update("expires_at", now-60).Error)
+
+	userIDs, err := ActiveUserSessionUserIDs(now)
+	require.NoError(t, err)
+	assert.Equal(t, []int{1101, 1102}, userIDs)
+
+	revoked, err := RevokeAllActiveUserSessions("admin_revoked_all", now)
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), revoked)
+
+	stored, err := GetUserSessionBySID("global-one")
+	require.NoError(t, err)
+	assert.Equal(t, UserSessionStatusRevoked, stored.Status)
+	assert.Equal(t, "admin_revoked_all", stored.RevokedReason)
+	assert.Equal(t, int64(now), stored.RevokedAt)
+	assert.Empty(t, mustActiveUserSessionUserIDs(t, now))
+
+	bumped, err := BumpAuthVersionsForUsers(userIDs)
+	require.NoError(t, err)
+	assert.Equal(t, 2, bumped)
+	for userID, want := range map[int]int64{1101: 6, 1102: 8} {
+		var user User
+		require.NoError(t, DB.First(&user, userID).Error)
+		assert.Equal(t, want, user.AuthVersion)
+	}
+}
+
+func mustActiveUserSessionUserIDs(t *testing.T, now int64) []int {
+	t.Helper()
+	userIDs, err := ActiveUserSessionUserIDs(now)
+	require.NoError(t, err)
+	return userIDs
+}

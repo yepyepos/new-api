@@ -7484,6 +7484,23 @@
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
     "Zoom": "Zoom",
+    "API and console access will resume once the site reopens.": "Доступ к API и консоли возобновится после открытия сайта.",
+    "API requests stop immediately and users are locked out of the console. Administrators keep access.": "Запросы к API немедленно прекращаются, а пользователи теряют доступ к консоли. Администраторы сохраняют доступ.",
+    "Close the site": "Закрыть сайт",
+    "Close the site now?": "Закрыть сайт сейчас?",
+    "Closed since {{time}}": "Закрыт с {{time}}",
+    "Closure notice": "Объявление о закрытии",
+    "Ends every dashboard session and invalidates the access tokens already issued to them. API keys keep working.": "Завершает все сеансы панели управления и аннулирует уже выданные токены доступа. Ключи API продолжают работать.",
+    "Every user, including you, will have to sign in again. API keys keep working.": "Всем пользователям, включая вас, придётся войти снова. Ключи API продолжают работать.",
+    "Markdown is supported. It is shown on the closure page and appended to the 503 message API clients receive.": "Поддерживается Markdown. Текст отображается на странице закрытия и добавляется к сообщению 503, которое получают клиенты API.",
+    "Save and close the site": "Сохранить и закрыть сайт",
+    "Sign out all users": "Завершить сеансы всех пользователей",
+    "Sign out all users?": "Завершить сеансы всех пользователей?",
+    "Sign out everyone": "Завершить все сеансы",
+    "Site Closure": "Закрытие сайта",
+    "The site is temporarily closed": "Сайт временно закрыт",
+    "We are performing scheduled maintenance and expect to be back shortly.": "Мы проводим плановое обслуживание и скоро вернёмся.",
+    "While closed, API requests return 503, users cannot sign in, and every page shows the notice below. Administrators keep access.": "Пока сайт закрыт, запросы к API возвращают 503, пользователи не могут войти, а все страницы показывают объявление ниже. Администраторы сохраняют доступ.",
     "Administrators and the root account keep their API keys. Turn this off to include them as well.": "Администраторы и учётная запись root сохраняют свои ключи API. Отключите этот параметр, чтобы включить и их.",
     "All API Tokens": "Все ключи API",
     "Clients using these {{count}} API keys will immediately get 401 Unauthorized. This is a soft delete and can be recovered from the database.": "Клиенты, использующие эти ключи API ({{count}}), немедленно получат 401 Unauthorized. Это мягкое удаление, его можно восстановить из базы данных.",
@@ -7517,6 +7534,7 @@
     "User API Keys": "Ключи API пользователя",
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "Если включено, все ключи API аннулируются раз в день в заданное время. Пользователям придётся создать новый ключ, чтобы продолжить. Это действие необратимо.",
     "e.g. 1, 7, 42": "например, 1, 7, 42",
-    "token name": "название ключа"
+    "token name": "название ключа",
+    "Save closure notice": "Сохранить объявление о закрытии"
   }
 }

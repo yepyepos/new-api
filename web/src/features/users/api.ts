@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import type { AxiosRequestConfig } from 'axios'
 
+import type { ApiKey } from '@/features/keys/types'
 import type { PermissionCatalog } from '@/lib/admin-permissions'
 import { api } from '@/lib/api'
 import type { CustomOAuthBinding } from '@/lib/oauth'
@@ -267,3 +268,61 @@ export async function adminUnbindCustomOAuth(
   )
   return res.data
 }
+
+// ============================================================================
+// Admin API Token Management APIs
+// ============================================================================
+
+export interface GetUserTokensParams {
+  p?: number
+  size?: number
+}
+
+export interface GetUserTokensResponse {
+  success: boolean
+  message?: string
+  data?: {
+    items: ApiKey[]
+    total: number
+    page: number
+    page_size: number
+  }
+}
+
+/**
+ * Get the API tokens created by a given user (admin).
+ * Keys are always returned masked by the backend.
+ */
+export async function getUserTokens(
+  userId: number,
+  params: GetUserTokensParams = {}
+): Promise<GetUserTokensResponse> {
+  const { p = 1, size = 50 } = params
+  const res = await api.get(`/api/user/${userId}/tokens`, {
+    params: { p, size },
+  })
+  return res.data
+}
+
+/**
+ * Delete a single API token of a given user (admin, soft delete).
+ */
+export async function deleteUserToken(
+  userId: number,
+  tokenId: number
+): Promise<ApiResponse> {
+  const res = await api.delete(`/api/user/${userId}/tokens/${tokenId}`)
+  return res.data
+}
+
+/**
+ * Batch delete API tokens of a given user (admin, soft delete).
+ */
+export async function deleteUserTokensBatch(
+  userId: number,
+  ids: number[]
+): Promise<ApiResponse<number>> {
+  const res = await api.post(`/api/user/${userId}/tokens/batch`, { ids })
+  return res.data
+}
+

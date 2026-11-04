@@ -423,6 +423,10 @@ export type SecuritySettings = {
   'fetch_setting.allowed_ports': number[]
   'fetch_setting.apply_ip_filter_for_domain': boolean
   'token_setting.max_user_tokens': number
+  'token_setting.auto_revoke_enabled': boolean
+  'token_setting.auto_revoke_time': string
+  'token_setting.auto_revoke_skip_admins': boolean
+  'token_setting.auto_revoke_exempt_user_ids': number[]
 }
 
 export type UpstreamChannel = {

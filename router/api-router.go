@@ -168,6 +168,11 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.DELETE("/:id", controller.DeleteUser)
 				adminRoute.DELETE("/:id/reset_passkey", controller.AdminResetPasskey)
 
+				// Admin API token management (view / revoke another user's keys)
+				adminRoute.GET("/:id/tokens", controller.AdminGetUserTokens)
+				adminRoute.DELETE("/:id/tokens/:token_id", controller.AdminDeleteUserToken)
+				adminRoute.POST("/:id/tokens/batch", controller.AdminDeleteUserTokensBatch)
+
 				// Admin 2FA routes
 				adminRoute.GET("/2fa/stats", controller.Admin2FAStats)
 				adminRoute.DELETE("/:id/2fa", controller.AdminDisable2FA)
@@ -298,6 +303,15 @@ func SetApiRouter(router *gin.Engine) {
 			tokenRoute.DELETE("/:id", controller.DeleteToken)
 			tokenRoute.POST("/batch", controller.DeleteTokenBatch)
 			tokenRoute.POST("/batch/keys", middleware.CriticalRateLimit(), middleware.DisableCache(), controller.GetTokenKeysBatch)
+		}
+
+		// Admin 全站令牌管理（跨用户查看 / 批量删除）
+		adminTokenRoute := apiRouter.Group("/admin/tokens")
+		adminTokenRoute.Use(middleware.AdminAuth())
+		{
+			adminTokenRoute.GET("/", controller.AdminListTokens)
+			adminTokenRoute.POST("/batch", controller.AdminDeleteTokensBatch)
+			adminTokenRoute.DELETE("/:id", controller.AdminDeleteTokenById)
 		}
 
 		usageRoute := apiRouter.Group("/usage")

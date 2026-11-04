@@ -73,6 +73,14 @@ const SECURITY_SECTIONS = [
         defaultValues={{
           'token_setting.max_user_tokens':
             settings['token_setting.max_user_tokens'],
+          'token_setting.auto_revoke_enabled':
+            settings['token_setting.auto_revoke_enabled'],
+          'token_setting.auto_revoke_time':
+            settings['token_setting.auto_revoke_time'],
+          'token_setting.auto_revoke_skip_admins':
+            settings['token_setting.auto_revoke_skip_admins'],
+          'token_setting.auto_revoke_exempt_user_ids':
+            settings['token_setting.auto_revoke_exempt_user_ids'],
         }}
       />
     ),

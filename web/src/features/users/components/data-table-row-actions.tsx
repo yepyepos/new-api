@@ -25,6 +25,7 @@ import {
   ArrowUp,
   ArrowDown,
   KeyRound,
+  KeySquare,
   ShieldAlert,
   Link2,
   CreditCard,
@@ -62,6 +63,7 @@ import {
 import { getUserActionMessage } from '../lib'
 import type { User } from '../types'
 import { UserBindingDialog } from './dialogs/user-binding-dialog'
+import { UserTokensDialog } from './dialogs/user-tokens-dialog'
 import { useUsers } from './users-provider'
 
 const MANAGE_ACTION_TITLES: Record<AdminUserManageAction, string> = {
@@ -90,6 +92,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [resetTwoFAOpen, setResetTwoFAOpen] = useState(false)
   const [bindingDialogOpen, setBindingDialogOpen] = useState(false)
   const [subscriptionsDialogOpen, setSubscriptionsDialogOpen] = useState(false)
+  const [tokensDialogOpen, setTokensDialogOpen] = useState(false)
 
   const handleEdit = () => {
     setCurrentRow(user)
@@ -279,6 +282,18 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </DropdownMenuItem>
         )}
 
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault()
+            setTokensDialogOpen(true)
+          }}
+        >
+          {t('Manage API Keys')}
+          <DropdownMenuShortcut>
+            <KeySquare size={16} />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
@@ -355,6 +370,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       <UserSubscriptionsDialog
         open={subscriptionsDialogOpen}
         onOpenChange={setSubscriptionsDialogOpen}
+        user={{ id: user.id, username: user.username }}
+        onSuccess={triggerRefresh}
+      />
+
+      <UserTokensDialog
+        open={tokensDialogOpen}
+        onOpenChange={setTokensDialogOpen}
         user={{ id: user.id, username: user.username }}
         onSuccess={triggerRefresh}
       />

@@ -117,6 +117,8 @@ func TestDiscordSettingsRejectInvalidAdmissionConfiguration(t *testing.T) {
 		{name: "cannot require disabled login", settings: system_setting.DiscordSettings{OnlyLogin: true}, want: system_setting.ErrDiscordLoginNotConfigured},
 		{name: "client credentials required", settings: system_setting.DiscordSettings{OnlyLogin: true, Enabled: true, ClientId: "client"}, want: system_setting.ErrDiscordLoginNotConfigured},
 		{name: "configured Discord only", settings: system_setting.DiscordSettings{OnlyLogin: true, Enabled: true, ClientId: "client", ClientSecret: "secret"}},
+		{name: "valid exempt user IDs", settings: system_setting.DiscordSettings{ExemptUserIDs: "456, 654"}},
+		{name: "invalid exempt user ID", settings: system_setting.DiscordSettings{ExemptUserIDs: "member"}, want: system_setting.ErrDiscordCommunitySettings},
 	} {
 		t.Run(test.name, func(t *testing.T) { assert.ErrorIs(t, test.settings.Validate(), test.want) })
 	}
@@ -143,6 +145,54 @@ func TestDiscordCodeExchangeRequiresBrowserBoundPKCE(t *testing.T) {
 	token, err := (&DiscordProvider{}).ExchangeToken(context.Background(), "authorization-code", c)
 	require.NoError(t, err)
 	assert.Equal(t, "test-access", token.AccessToken)
+}
+
+func TestDiscordExemptUsersSkipMembership(t *testing.T) {
+	settings := system_setting.GetDiscordSettings()
+	previous, transport := *settings, http.DefaultTransport
+	t.Cleanup(func() { *settings, http.DefaultTransport = previous, transport })
+	*settings = system_setting.DiscordSettings{GuildID: "123", RoleIDs: "789", RoleMatchMode: "all", BlockedGuildIDs: "999", ExemptUserIDs: "456, 654"}
+	for _, test := range []struct {
+		name   string
+		uid    string
+		guilds string
+		member string
+		status int
+		want   string
+	}{
+		{name: "exempt user skips membership", uid: "456", guilds: `[]`, status: 200},
+		{name: "exempt user listed with whitespace", uid: "654", guilds: `[]`, status: 200},
+		{name: "non-exempt user still denied", uid: "111", guilds: `[]`, member: `{"user":{"id":"111"},"roles":[]}`, status: 200, want: "You do not have all required Discord roles."},
+		{name: "blocked guild beats exemption", uid: "456", guilds: `[{"id":"999"}]`, status: 200, want: "not permitted"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			*settings = system_setting.DiscordSettings{GuildID: "123", RoleIDs: "789", RoleMatchMode: "all", BlockedGuildIDs: "999", ExemptUserIDs: "456, 654"}
+			memberCalled := false
+			http.DefaultTransport = discordTestTransport(func(req *http.Request) (*http.Response, error) {
+				switch req.URL.Path {
+				case "/api/v10/users/@me":
+					return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"id":"` + test.uid + `","username":"member"}`)), Header: http.Header{}}, nil
+				case "/api/v10/users/@me/guilds":
+					return &http.Response{StatusCode: test.status, Body: io.NopCloser(strings.NewReader(test.guilds)), Header: http.Header{}}, nil
+				case "/api/v10/users/@me/guilds/123/member":
+					memberCalled = true
+					return &http.Response{StatusCode: test.status, Body: io.NopCloser(strings.NewReader(test.member)), Header: http.Header{}}, nil
+				}
+				t.Fatalf("unexpected path: %s", req.URL.Path)
+				return nil, nil
+			})
+			user, err := (&DiscordProvider{}).GetUserInfo(context.Background(), &OAuthToken{AccessToken: "test-access"})
+			if test.want == "" {
+				require.NoError(t, err)
+				require.NotNil(t, user)
+				assert.Equal(t, test.uid, user.ProviderUserID)
+				assert.False(t, memberCalled, "exempt users must not hit the membership endpoint")
+			} else {
+				require.ErrorContains(t, err, test.want)
+				assert.Nil(t, user)
+			}
+		})
+	}
 }
 
 func TestDiscordInviteExemptionCannotBypassBlacklist(t *testing.T) {

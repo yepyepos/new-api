@@ -64,6 +64,7 @@ SESSION_COOKIE_TRUSTED_URL=https://api.example.com
 | 允许的身份组 ID | `discord.role_ids` | 可留空；多个用英文逗号分隔，按匹配方式判断 |
 | 身份组匹配方式 | `discord.role_match_mode` | `any` 为任意匹配，`all` 为全部匹配 |
 | 黑名单服务器 ID | `discord.blocked_guild_ids` | 多个 ID 用逗号或换行分隔；优先于邀请码免审 |
+| 免身份组检查的用户 ID | `discord.exempt_user_ids` | Discord 用户 ID（不是用户名），逗号或换行分隔；这些账号登录时跳过服务器/身份组校验，但黑名单服务器仍然生效 |
 | 普通用户仅允许 Discord 登录 | `discord.only_login` | 社区专用站建议开启；管理员原有登录不受该开关限制 |
 
 Discord 开启“开发者模式”后，可通过服务器右键菜单复制服务器 ID。身份组也应使用 ID，而不是会改名的身份组名称；如果你的客户端无法复制身份组 ID，可请社区管理员提供该 ID，不需要索取管理员权限。

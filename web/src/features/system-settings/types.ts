@@ -176,6 +176,7 @@ export type AuthSettings = {
   'discord.role_match_mode': 'any' | 'all'
   'discord.only_login': boolean
   'discord.blocked_guild_ids': string
+  'discord.exempt_user_ids': string
   'oidc.enabled': boolean
   'oidc.display_name': string
   'oidc.client_id': string

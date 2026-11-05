@@ -18,6 +18,7 @@ type DiscordSettings struct {
 	RoleMatchMode   string `json:"role_match_mode"`
 	OnlyLogin       bool   `json:"only_login"`
 	BlockedGuildIDs string `json:"blocked_guild_ids"`
+	ExemptUserIDs   string `json:"exempt_user_ids"`
 }
 
 var ErrDiscordCommunitySettings = errors.New("Invalid Discord community settings. Use numeric IDs and specify a server before roles.")
@@ -45,6 +46,12 @@ func (s DiscordSettings) BlockedGuilds() []string {
 	return strings.FieldsFunc(s.BlockedGuildIDs, func(r rune) bool { return r == ',' || r == '\n' || r == '\r' || r == ' ' })
 }
 
+// ExemptUsers returns Discord user IDs that skip the membership/role check.
+// The blocked-server check still applies to them.
+func (s DiscordSettings) ExemptUsers() []string {
+	return strings.FieldsFunc(s.ExemptUserIDs, func(r rune) bool { return r == ',' || r == '\n' || r == '\r' || r == ' ' })
+}
+
 func (s DiscordSettings) Validate() error {
 	if s.RoleMatchMode != "" && s.RoleMatchMode != "any" && s.RoleMatchMode != "all" {
 		return ErrDiscordRoleMatchMode
@@ -59,6 +66,11 @@ func (s DiscordSettings) Validate() error {
 	}
 	for _, guild := range s.BlockedGuilds() {
 		if !validDiscordID(guild) {
+			return ErrDiscordCommunitySettings
+		}
+	}
+	for _, userID := range s.ExemptUsers() {
+		if !validDiscordID(userID) {
 			return ErrDiscordCommunitySettings
 		}
 	}

@@ -66,6 +66,7 @@ const AUTH_SECTIONS = [
           'discord.role_match_mode': settings['discord.role_match_mode'],
           'discord.only_login': settings['discord.only_login'],
           'discord.blocked_guild_ids': settings['discord.blocked_guild_ids'],
+          'discord.exempt_user_ids': settings['discord.exempt_user_ids'],
           'oidc.enabled': settings['oidc.enabled'],
           'oidc.display_name': settings['oidc.display_name'],
           'oidc.client_id': settings['oidc.client_id'],

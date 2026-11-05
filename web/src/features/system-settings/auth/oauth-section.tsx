@@ -41,6 +41,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { handleServerError } from '@/lib/handle-server-error'
 
 import { FormDirtyIndicator } from '../components/form-dirty-indicator'
@@ -77,6 +78,7 @@ const oauthSchema = z.object({
     role_match_mode: z.enum(['any', 'all']),
     only_login: z.boolean(),
     blocked_guild_ids: z.string(),
+    exempt_user_ids: z.string(),
   }),
   oidc: z.object({
     enabled: z.boolean(),
@@ -114,6 +116,7 @@ type FlatOAuthDefaults = {
   'discord.role_match_mode': 'any' | 'all'
   'discord.only_login': boolean
   'discord.blocked_guild_ids': string
+  'discord.exempt_user_ids': string
   'oidc.enabled': boolean
   'oidc.display_name': string
   'oidc.client_id': string
@@ -200,6 +203,7 @@ const buildFormDefaults = (defaults: FlatOAuthDefaults): OAuthFormValues => ({
     role_match_mode: defaults['discord.role_match_mode'] || 'any',
     only_login: defaults['discord.only_login'] ?? false,
     blocked_guild_ids: defaults['discord.blocked_guild_ids'] ?? '',
+    exempt_user_ids: defaults['discord.exempt_user_ids'] ?? '',
   },
   oidc: {
     enabled: defaults['oidc.enabled'],
@@ -238,6 +242,7 @@ const normalizeFormValues = (values: OAuthFormValues): FlatOAuthDefaults => ({
   'discord.role_match_mode': values.discord.role_match_mode,
   'discord.only_login': values.discord.only_login,
   'discord.blocked_guild_ids': values.discord.blocked_guild_ids.trim(),
+  'discord.exempt_user_ids': values.discord.exempt_user_ids.trim(),
   'oidc.enabled': values.oidc.enabled,
   'oidc.display_name': values.oidc.display_name,
   'oidc.client_id': values.oidc.client_id,
@@ -324,6 +329,10 @@ export function OAuthSection(props: OAuthSectionProps) {
       .split(',')
       .map((id) => id.trim())
       .filter(Boolean)
+    const exemptUserIds = values.discord.exempt_user_ids
+      .split(/[,\s]+/)
+      .map((id) => id.trim())
+      .filter(Boolean)
     if (roleIds.length > 0 && !guildId) {
       setActiveTab('discord')
       form.setError('discord.guild_id', {
@@ -334,6 +343,7 @@ export function OAuthSection(props: OAuthSectionProps) {
     for (const [field, ids] of [
       ['guild_id', guildId ? [guildId] : []],
       ['role_ids', roleIds],
+      ['exempt_user_ids', exemptUserIds],
     ] as const) {
       if (
         ids.some(
@@ -785,6 +795,27 @@ export function OAuthSection(props: OAuthSectionProps) {
                       <FormDescription>
                         {t(
                           'Separate server IDs with commas. Members are denied at login and registration, including exempt invitations. Existing sessions are not monitored.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='discord.exempt_user_ids'
+                  render={({ field }) => (
+                    <FormItem className='lg:col-span-2'>
+                      <FormLabel>
+                        {t('Discord user IDs exempt from role check')}
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea {...field} autoComplete='off' />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Separate Discord user IDs with commas or line breaks. These accounts skip the server and role checks at login. Blocked servers still apply.'
                         )}
                       </FormDescription>
                       <FormMessage />

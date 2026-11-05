@@ -51,6 +51,7 @@ const defaults: ComponentProps<typeof OAuthSection>['defaultValues'] = {
   'discord.role_match_mode': 'any',
   'discord.only_login': false,
   'discord.blocked_guild_ids': '',
+  'discord.exempt_user_ids': '',
   'oidc.enabled': false,
   'oidc.display_name': '',
   'oidc.client_id': '',

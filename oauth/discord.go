@@ -193,6 +193,7 @@ func (p *DiscordProvider) GetUserInfo(ctx context.Context, token *OAuthToken) (*
 			return nil, err
 		}
 	}
+	exempt = exempt || slices.Contains(settings.ExemptUsers(), discordUser.UID)
 	if settings.GuildID != "" && !exempt {
 		if err := p.verifyMembership(ctx, token.AccessToken, discordUser.UID, settings); err != nil {
 			return nil, err

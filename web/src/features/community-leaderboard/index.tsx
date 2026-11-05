@@ -29,7 +29,10 @@ import {
   LeaderboardCard,
   UsageLeaderboardList,
 } from './components/leaderboard-lists'
-import { useCheckinLeaderboard, useUsageLeaderboard } from './hooks/use-leaderboards'
+import {
+  useCheckinLeaderboard,
+  useUsageLeaderboard,
+} from './hooks/use-leaderboards'
 
 const USAGE_PERIODS: LeaderboardPeriod[] = ['today', 'week', 'all']
 
@@ -60,10 +63,19 @@ export function CommunityLeaderboard() {
 
   const checkinQuery = useCheckinLeaderboard()
   const usageQuery = useUsageLeaderboard(usagePeriod)
+  const checkinTotal = checkinQuery.data?.total ?? 0
+  const usageTotal = usageQuery.data?.total ?? 0
 
   return (
     <div className='mx-auto flex w-full max-w-5xl flex-col gap-4 sm:gap-6'>
-      <LeaderboardCard title={t("Today's check-in leaderboard")}>
+      <LeaderboardCard
+        title={t("Today's check-in leaderboard")}
+        subtitle={
+          checkinTotal > 0
+            ? t('{{count}} checked in today', { count: checkinTotal })
+            : undefined
+        }
+      >
         <PanelState
           loading={checkinQuery.isLoading}
           failed={checkinQuery.isError}
@@ -73,12 +85,17 @@ export function CommunityLeaderboard() {
         </PanelState>
       </LeaderboardCard>
 
-      <LeaderboardCard title={t('Usage leaderboard')}>
+      <LeaderboardCard
+        title={t('Usage leaderboard')}
+        subtitle={
+          usageTotal > 0
+            ? t('{{count}} active users', { count: usageTotal })
+            : undefined
+        }
+      >
         <Tabs
           value={usagePeriod}
-          onValueChange={(value) =>
-            setUsagePeriod(value as LeaderboardPeriod)
-          }
+          onValueChange={(value) => setUsagePeriod(value as LeaderboardPeriod)}
         >
           <TabsList className='mb-3'>
             {USAGE_PERIODS.map((period) => (

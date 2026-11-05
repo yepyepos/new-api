@@ -35,7 +35,7 @@ func GetCheckinLeaderboard(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	rows, err := model.GetTodayCheckinLeaderboard(today, communityLeaderboardLimit)
+	rows, total, err := model.GetTodayCheckinLeaderboard(today, communityLeaderboardLimit)
 	if err != nil {
 		common.ApiError(c, err)
 		return
@@ -45,7 +45,7 @@ func GetCheckinLeaderboard(c *gin.Context) {
 		"data": gin.H{
 			"date":  today,
 			"rows":  rows,
-			"total": len(rows),
+			"total": total,
 		},
 	})
 }
@@ -62,7 +62,7 @@ func GetUsageLeaderboard(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	rows, err := model.GetUsageLeaderboard(startTime, communityLeaderboardLimit)
+	rows, total, err := model.GetUsageLeaderboard(startTime, communityLeaderboardLimit)
 	if err != nil {
 		common.ApiError(c, err)
 		return
@@ -72,7 +72,7 @@ func GetUsageLeaderboard(c *gin.Context) {
 		"data": gin.H{
 			"period": period,
 			"rows":   rows,
-			"total":  len(rows),
+			"total":  total,
 		},
 	})
 }

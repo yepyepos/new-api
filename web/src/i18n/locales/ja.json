@@ -7555,6 +7555,8 @@
     "Check-in rewards and model usage rankings.": "チェックイン報酬とモデル消費のランキング。",
     "Leaderboard is not available": "ランキングを利用できません",
     "Invalid check-in reward range": "チェックイン報酬の範囲が無効です",
-    "Invalid leaderboard period": "ランキングの期間が無効です"
+    "Invalid leaderboard period": "ランキングの期間が無効です",
+    "{{count}} checked in today": "本日のチェックイン {{count}} 人",
+    "{{count}} active users": "アクティブユーザー {{count}} 人"
   }
 }

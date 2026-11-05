@@ -7555,6 +7555,8 @@
     "Check-in rewards and model usage rankings.": "Награды за отметку и рейтинги расхода.",
     "Leaderboard is not available": "Рейтинг недоступен",
     "Invalid check-in reward range": "Недопустимый диапазон награды за отметку",
-    "Invalid leaderboard period": "Недопустимый период рейтинга"
+    "Invalid leaderboard period": "Недопустимый период рейтинга",
+    "{{count}} checked in today": "Отметились сегодня: {{count}}",
+    "{{count}} active users": "Активных пользователей: {{count}}"
   }
 }

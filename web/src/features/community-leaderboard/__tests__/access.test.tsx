@@ -46,7 +46,9 @@ function visibilityFor(role: number, publicEnabled?: boolean) {
   useAuthStore.getState().auth.setUser({ id: 1, username: 'alice', role })
   function Wrapper(props: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={client}>{props.children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        {props.children}
+      </QueryClientProvider>
     )
   }
   return renderHook(() => useCommunityLeaderboardVisible(), {

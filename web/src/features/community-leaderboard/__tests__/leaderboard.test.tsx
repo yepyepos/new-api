@@ -21,7 +21,7 @@ function renderLeaderboard() {
   )
 }
 
-it('lists today\'s check-in rewards and omits the board when nobody checked in', async () => {
+it("lists today's check-in rewards and omits the board when nobody checked in", async () => {
   vi.spyOn(api, 'get').mockResolvedValue({
     data: {
       success: true,
@@ -39,38 +39,70 @@ it('lists today\'s check-in rewards and omits the board when nobody checked in',
   ).toBeVisible()
 })
 
-it('ranks check-in rewards and switches the usage leaderboard period', async () => {
-  const get = vi.spyOn(api, 'get').mockImplementation(
-    async (url: string, config?: AxiosRequestConfig<unknown>) => {
-      if (url === '/api/community/checkin-leaderboard') {
-        return {
-          data: {
-            success: true,
-            data: {
-              date: '2026-06-15',
-              total: 2,
-              rows: [
-                { user_id: 2, username: 'lucky', quota_awarded: 2000000 },
-                { user_id: 3, username: 'steady', quota_awarded: 500000 },
-              ],
-            },
-          },
-        }
-      }
-      const period = config?.params?.period ?? 'today'
-      const username = period === 'today' ? 'today-heavy' : 'week-heavy'
+it('shows how many users checked in and used models, independent of the listed rows', async () => {
+  vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+    if (url === '/api/community/checkin-leaderboard') {
       return {
         data: {
           success: true,
           data: {
-            period,
-            total: 1,
-            rows: [{ user_id: 4, username, total_quota: 9000000 }],
+            date: '2026-06-15',
+            total: 89,
+            rows: [{ user_id: 2, username: 'lucky', quota_awarded: 2000000 }],
           },
         },
       }
     }
-  )
+    return {
+      data: {
+        success: true,
+        data: {
+          period: 'today',
+          total: 329,
+          rows: [{ user_id: 4, username: 'today-heavy', total_quota: 9000000 }],
+        },
+      },
+    }
+  })
+  renderLeaderboard()
+  expect(await screen.findByText('89 checked in today')).toBeVisible()
+  expect(await screen.findByText('329 active users')).toBeVisible()
+})
+
+it('ranks check-in rewards and switches the usage leaderboard period', async () => {
+  const get = vi
+    .spyOn(api, 'get')
+    .mockImplementation(
+      async (url: string, config?: AxiosRequestConfig<unknown>) => {
+        if (url === '/api/community/checkin-leaderboard') {
+          return {
+            data: {
+              success: true,
+              data: {
+                date: '2026-06-15',
+                total: 2,
+                rows: [
+                  { user_id: 2, username: 'lucky', quota_awarded: 2000000 },
+                  { user_id: 3, username: 'steady', quota_awarded: 500000 },
+                ],
+              },
+            },
+          }
+        }
+        const period = config?.params?.period ?? 'today'
+        const username = period === 'today' ? 'today-heavy' : 'week-heavy'
+        return {
+          data: {
+            success: true,
+            data: {
+              period,
+              total: 1,
+              rows: [{ user_id: 4, username, total_quota: 9000000 }],
+            },
+          },
+        }
+      }
+    )
   renderLeaderboard()
   const items = await screen.findAllByRole('listitem')
   expect(items[0]).toHaveTextContent('lucky')

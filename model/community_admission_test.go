@@ -64,7 +64,7 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 			}
 			require.NoError(t, DB.Raw(query).Scan(&version).Error)
 			t.Logf("database version: %s", version)
-			models := []any{&RegistrationAdmission{}, &RegistrationInvite{}, &RegistrationBatch{}, &Checkin{}, &User{}}
+			models := []any{&RegistrationAdmission{}, &RegistrationInvite{}, &RegistrationBatch{}, &Checkin{}, &User{}, &Log{}}
 			for _, upgrade := range []bool{false, true} {
 				t.Run(fmt.Sprintf("upgrade=%v", upgrade), func(t *testing.T) {
 					require.NoError(t, DB.Migrator().DropTable(models...))
@@ -238,7 +238,6 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					require.NoError(t, DB.First(ordinary, ordinary.Id).Error)
 					assert.Equal(t, 51, ordinary.Quota)
 					// Leaderboards rank the check-in reward and the billed usage.
-					require.NoError(t, DB.AutoMigrate(&Log{}))
 					previousLogDB := LOG_DB
 					LOG_DB = DB
 					t.Cleanup(func() { LOG_DB = previousLogDB })
@@ -247,21 +246,27 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					require.NoError(t, DB.Create(&Log{UserId: ordinary.Id, Type: LogTypeConsume, Quota: 30, CreatedAt: time.Now().Unix()}).Error)
 					require.NoError(t, DB.Create(&Log{UserId: invited.Id, Type: LogTypeConsume, Quota: 90, CreatedAt: time.Now().Unix()}).Error)
 					require.NoError(t, DB.Create(&Log{UserId: invited.Id, Type: LogTypeTopup, Quota: 500, CreatedAt: time.Now().Unix()}).Error)
-					usage, err := GetUsageLeaderboard(0, 10)
+					usage, usageTotal, err := GetUsageLeaderboard(0, 10)
 					require.NoError(t, err)
 					require.Len(t, usage, 2, "top-ups are not consumption")
 					assert.Equal(t, invited.Id, usage[0].UserId)
 					assert.Equal(t, int64(90), usage[0].TotalQuota)
 					assert.Equal(t, "invited", usage[0].Username)
-					checkins, err := GetTodayCheckinLeaderboard(checkinDay, 10)
+					assert.Equal(t, int64(2), usageTotal, "the total counts every consuming user")
+					_, cappedTotal, err := GetUsageLeaderboard(0, 1)
+					require.NoError(t, err)
+					assert.Equal(t, int64(2), cappedTotal, "limiting the rows must not change the total")
+					checkins, checkinTotal, err := GetTodayCheckinLeaderboard(checkinDay, 10)
 					require.NoError(t, err)
 					require.NotEmpty(t, checkins)
+					assert.Equal(t, int64(len(checkins)), checkinTotal)
 					for _, row := range checkins {
 						assert.GreaterOrEqual(t, row.QuotaAwarded, 1)
 					}
-					empty, err := GetTodayCheckinLeaderboard("1990-01-01", 10)
+					empty, emptyTotal, err := GetTodayCheckinLeaderboard("1990-01-01", 10)
 					require.NoError(t, err)
 					assert.Empty(t, empty, "users who did not check in are omitted")
+					assert.Zero(t, emptyTotal)
 				})
 			}
 		})

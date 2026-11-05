@@ -7555,6 +7555,8 @@
     "Check-in rewards and model usage rankings.": "簽到獎勵與模型消耗排行榜。",
     "Leaderboard is not available": "排行榜不可用",
     "Invalid check-in reward range": "簽到獎勵區間無效",
-    "Invalid leaderboard period": "排行榜時間範圍無效"
+    "Invalid leaderboard period": "排行榜時間範圍無效",
+    "{{count}} checked in today": "今日已簽到：{{count}} 人",
+    "{{count}} active users": "{{count}} 位活躍使用者"
   }
 }

@@ -16,17 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Card } from '@/components/ui/card'
-import { formatQuotaWithCurrency } from '@/lib/currency'
 import { toIntlLocale } from '@/i18n/languages'
+import { formatQuotaWithCurrency } from '@/lib/currency'
 
-import type {
-  CheckinLeaderboardRow,
-  UsageLeaderboardRow,
-} from '../api'
+import type { CheckinLeaderboardRow, UsageLeaderboardRow } from '../api'
 
 type RankedRowProps = {
   rank: number
@@ -79,9 +76,7 @@ export function CheckinLeaderboardList(props: {
   )
 }
 
-export function UsageLeaderboardList(props: {
-  rows: UsageLeaderboardRow[]
-}) {
+export function UsageLeaderboardList(props: { rows: UsageLeaderboardRow[] }) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   if (props.rows.length === 0) {
@@ -103,6 +98,7 @@ export function UsageLeaderboardList(props: {
 
 export function LeaderboardCard(props: {
   title: string
+  subtitle?: string
   children: ReactNode
 }) {
   return (
@@ -111,6 +107,11 @@ export function LeaderboardCard(props: {
         <h3 className='text-base font-semibold tracking-tight sm:text-lg'>
           {props.title}
         </h3>
+        {props.subtitle ? (
+          <p className='text-muted-foreground mt-1 text-xs tabular-nums'>
+            {props.subtitle}
+          </p>
+        ) : null}
       </div>
       <div className='p-2 sm:p-3'>{props.children}</div>
     </Card>

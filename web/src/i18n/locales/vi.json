@@ -7555,6 +7555,8 @@
     "Check-in rewards and model usage rankings.": "Phần thưởng điểm danh và bảng xếp hạng tiêu dùng.",
     "Leaderboard is not available": "Bảng xếp hạng không khả dụng",
     "Invalid check-in reward range": "Khoảng thưởng điểm danh không hợp lệ",
-    "Invalid leaderboard period": "Khoảng thời gian bảng xếp hạng không hợp lệ"
+    "Invalid leaderboard period": "Khoảng thời gian bảng xếp hạng không hợp lệ",
+    "{{count}} checked in today": "{{count}} người đã điểm danh hôm nay",
+    "{{count}} active users": "{{count}} người dùng đang hoạt động"
   }
 }

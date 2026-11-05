@@ -7555,6 +7555,8 @@
     "Check-in rewards and model usage rankings.": "Check-in rewards and model usage rankings.",
     "Leaderboard is not available": "Leaderboard is not available",
     "Invalid check-in reward range": "Invalid check-in reward range",
-    "Invalid leaderboard period": "Invalid leaderboard period"
+    "Invalid leaderboard period": "Invalid leaderboard period",
+    "{{count}} checked in today": "{{count}} checked in today",
+    "{{count}} active users": "{{count}} active users"
   }
 }

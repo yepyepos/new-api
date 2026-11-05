@@ -7555,6 +7555,8 @@
     "Check-in rewards and model usage rankings.": "Récompenses de pointage et classements de consommation.",
     "Leaderboard is not available": "Classement indisponible",
     "Invalid check-in reward range": "Plage de récompense de pointage invalide",
-    "Invalid leaderboard period": "Période de classement invalide"
+    "Invalid leaderboard period": "Période de classement invalide",
+    "{{count}} checked in today": "{{count}} participants aujourd’hui",
+    "{{count}} active users": "{{count}} utilisateurs actifs"
   }
 }

@@ -2906,7 +2906,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Các Dự Án Liên Quan",
     "footer.defaultCopyright": "Bản quyền được bảo lưu.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
+    "footer.newapi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Với kênh tùy chỉnh nâng cao, thiết lập này chỉ áp dụng cho các route /v1/responses không chuyển đổi giao thức.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Đối với các kênh được thêm sau ngày 10 tháng 5 năm 2025, không cần loại bỏ \".\" khỏi tên mô hình trong quá trình triển khai",
     "For private deployments, format: https://fastgpt.run/api/openapi": "Đối với các triển khai riêng tư, định dạng: https://fastgpt.run/api/openapi",
@@ -7537,6 +7537,19 @@
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "Khi bật, mọi API key bị vô hiệu hóa mỗi ngày một lần vào thời điểm đã đặt. Người dùng phải tạo key mới để tiếp tục. Không thể hoàn tác.",
     "e.g. 1, 7, 42": "ví dụ 1, 7, 42",
     "token name": "tên key",
-    "Save closure notice": "Lưu thông báo đóng trang"
+    "Save closure notice": "Lưu thông báo đóng trang",
+    "Minimum check-in reward (USD)": "Phần thưởng điểm danh tối thiểu (USD)",
+    "Maximum check-in reward (USD)": "Phần thưởng điểm danh tối đa (USD)",
+    "Fallback fixed check-in reward (USD)": "Phần thưởng điểm danh cố định dự phòng (USD)",
+    "Used when no reward range is set. Enter USD and it is saved as internal quota units.": "Dùng khi chưa đặt khoảng thưởng. Nhập USD, lưu theo đơn vị hạn mức nội bộ.",
+    "Random check-in reward range": "Khoảng thưởng điểm danh ngẫu nhiên",
+    "Show leaderboards to users": "Hiển thị bảng xếp hạng cho người dùng",
+    "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.": "Cho phép người dùng thường xem bảng xếp hạng điểm danh và sử dụng. Quản trị viên luôn xem được.",
+    "Today's check-in leaderboard": "Bảng xếp hạng điểm danh hôm nay",
+    "Usage leaderboard": "Bảng xếp hạng sử dụng",
+    "No one has checked in today yet.": "Hôm nay chưa có ai điểm danh.",
+    "No usage recorded for this period.": "Không có dữ liệu sử dụng trong khoảng thời gian này.",
+    "All time": "Toàn bộ thời gian",
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Nhập cả hai để bật khoảng thưởng, hoặc để cả hai bằng 0 để dùng phần thưởng dự phòng"
   }
 }

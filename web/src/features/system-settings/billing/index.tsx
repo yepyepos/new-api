@@ -111,6 +111,7 @@ const defaultBillingSettings: BillingSettings = {
   'checkin_setting.threshold_enabled': false,
   'checkin_setting.balance_threshold': 0,
   'checkin_setting.timezone': 'Asia/Hong_Kong',
+  'community_leaderboard.public_enabled': false,
 }
 
 export function BillingSettings() {

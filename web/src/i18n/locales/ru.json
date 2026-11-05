@@ -2906,7 +2906,7 @@
     "footer.columns.related.links.oneApi": "Один API",
     "footer.columns.related.title": "Связанные проекты",
     "footer.defaultCopyright": "Все права защищены.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Все права защищены. Разработано участниками проекта.",
+    "footer.newapi.projectAttributionSuffix": "Все права защищены. Разработано участниками проекта.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Для расширенных пользовательских каналов это действует только для маршрутов /v1/responses без преобразования протокола.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Для каналов, добавленных после 10 мая 2025 г., не нужно удалять \".\" из имён моделей при развёртывании",
     "For private deployments, format: https://fastgpt.run/api/openapi": "Для частных развертываний, формат: https://fastgpt.run/api/openapi",
@@ -7537,6 +7537,19 @@
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "Если включено, все ключи API аннулируются раз в день в заданное время. Пользователям придётся создать новый ключ, чтобы продолжить. Это действие необратимо.",
     "e.g. 1, 7, 42": "например, 1, 7, 42",
     "token name": "название ключа",
-    "Save closure notice": "Сохранить объявление о закрытии"
+    "Save closure notice": "Сохранить объявление о закрытии",
+    "Minimum check-in reward (USD)": "Минимальная награда за вход (USD)",
+    "Maximum check-in reward (USD)": "Максимальная награда за вход (USD)",
+    "Fallback fixed check-in reward (USD)": "Резервная фиксированная награда (USD)",
+    "Used when no reward range is set. Enter USD and it is saved as internal quota units.": "Используется, если диапазон не задан. Вводится в USD и сохраняется во внутренних единицах квоты.",
+    "Random check-in reward range": "Диапазон случайной награды за вход",
+    "Show leaderboards to users": "Показывать рейтинги пользователям",
+    "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.": "Позволяет обычным пользователям видеть рейтинги входов и использования. Администраторы видят их всегда.",
+    "Today's check-in leaderboard": "Рейтинг входов за сегодня",
+    "Usage leaderboard": "Рейтинг использования",
+    "No one has checked in today yet.": "Сегодня ещё никто не заходил.",
+    "No usage recorded for this period.": "За этот период использование не зафиксировано.",
+    "All time": "За всё время",
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Заполните оба поля, чтобы включить диапазон, либо оставьте оба нулевыми для резервной награды"
   }
 }

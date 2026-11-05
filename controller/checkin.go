@@ -36,8 +36,8 @@ func GetCheckinStatus(c *gin.Context) {
 		"success": true,
 		"data": gin.H{
 			"enabled":           setting.Enabled,
-			"min_quota":         setting.Quota,
-			"max_quota":         setting.Quota,
+			"min_quota":         setting.MinQuota,
+			"max_quota":         setting.MaxQuota,
 			"quota":             setting.Quota,
 			"threshold_enabled": setting.ThresholdEnabled,
 			"balance_threshold": setting.BalanceThreshold,

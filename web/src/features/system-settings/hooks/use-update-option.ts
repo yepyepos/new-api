@@ -30,6 +30,7 @@ import type { UpdateOptionRequest, UpdatePasskeyDomainsRequest } from '../types'
 const STATUS_RELATED_KEYS = new Set([
   'RegisterEnabled',
   'checkin_setting.enabled',
+  'community_leaderboard.public_enabled',
   'discord.enabled',
   'discord.client_id',
   'discord.guild_id',
@@ -67,7 +68,10 @@ export function useUpdateOption() {
       if (data.success) {
         // Always refresh system-options
         queryClient.invalidateQueries({ queryKey: ['system-options'] })
-        if (variables.key.startsWith('checkin_setting.')) {
+        if (
+          variables.key.startsWith('checkin_setting.') ||
+          variables.key === 'community_leaderboard.public_enabled'
+        ) {
           queryClient.invalidateQueries({ queryKey: ['checkin-status'] })
         }
 

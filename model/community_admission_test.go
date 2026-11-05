@@ -174,6 +174,24 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					assert.ErrorContains(t, err, "Already checked in today")
 					require.NoError(t, DB.First(invited, invited.Id).Error)
 					assert.Equal(t, 150, invited.Quota)
+					// A configured range awards inside it; min == max stays fixed.
+					ranged := &User{Username: "ranged", Status: common.UserStatusEnabled, AffCode: "ranged"}
+					require.NoError(t, DB.Create(ranged).Error)
+					*operation_setting.GetCheckinSetting() = operation_setting.CheckinSetting{Enabled: true, Quota: 50, MinQuota: 40, MaxQuota: 60, Timezone: "Asia/Hong_Kong"}
+					for range 5 {
+						require.NoError(t, DB.Where("user_id = ?", ranged.Id).Delete(&Checkin{}).Error)
+						reward, rewardErr := UserCheckin(ranged.Id)
+						require.NoError(t, rewardErr)
+						assert.GreaterOrEqual(t, reward.QuotaAwarded, 40)
+						assert.LessOrEqual(t, reward.QuotaAwarded, 60)
+					}
+					*operation_setting.GetCheckinSetting() = operation_setting.CheckinSetting{Enabled: true, Quota: 50, MinQuota: 70, MaxQuota: 70, Timezone: "Asia/Hong_Kong"}
+					require.NoError(t, DB.Where("user_id = ?", ranged.Id).Delete(&Checkin{}).Error)
+					fixed, fixedErr := UserCheckin(ranged.Id)
+					require.NoError(t, fixedErr)
+					assert.Equal(t, 70, fixed.QuotaAwarded)
+					assert.Error(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: 70, MaxQuota: 60, Timezone: "UTC"}).Validate(), "an inverted range must be rejected")
+					*operation_setting.GetCheckinSetting() = operation_setting.CheckinSetting{Enabled: true, Quota: 50, ThresholdEnabled: true, BalanceThreshold: 100, Timezone: "Asia/Hong_Kong"}
 					require.NoError(t, DB.Model(ordinary).Update("quota", 1).Error)
 					operation_setting.GetCheckinSetting().ThresholdEnabled = false
 					operation_setting.GetCheckinSetting().Quota = common.MaxWalletQuota
@@ -212,6 +230,31 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					assert.Equal(t, 1, commits, "parallel check-ins must grant once")
 					require.NoError(t, DB.First(ordinary, ordinary.Id).Error)
 					assert.Equal(t, 51, ordinary.Quota)
+					// Leaderboards rank the check-in reward and the billed usage.
+					require.NoError(t, DB.AutoMigrate(&Log{}))
+					previousLogDB := LOG_DB
+					LOG_DB = DB
+					t.Cleanup(func() { LOG_DB = previousLogDB })
+					checkinDay, err := operation_setting.CheckinSettingsSnapshot().Today()
+					require.NoError(t, err)
+					require.NoError(t, DB.Create(&Log{UserId: ordinary.Id, Type: LogTypeConsume, Quota: 30, CreatedAt: time.Now().Unix()}).Error)
+					require.NoError(t, DB.Create(&Log{UserId: invited.Id, Type: LogTypeConsume, Quota: 90, CreatedAt: time.Now().Unix()}).Error)
+					require.NoError(t, DB.Create(&Log{UserId: invited.Id, Type: LogTypeTopup, Quota: 500, CreatedAt: time.Now().Unix()}).Error)
+					usage, err := GetUsageLeaderboard(0, 10)
+					require.NoError(t, err)
+					require.Len(t, usage, 2, "top-ups are not consumption")
+					assert.Equal(t, invited.Id, usage[0].UserId)
+					assert.Equal(t, int64(90), usage[0].TotalQuota)
+					assert.Equal(t, "invited", usage[0].Username)
+					checkins, err := GetTodayCheckinLeaderboard(checkinDay, 10)
+					require.NoError(t, err)
+					require.NotEmpty(t, checkins)
+					for _, row := range checkins {
+						assert.GreaterOrEqual(t, row.QuotaAwarded, 1)
+					}
+					empty, err := GetTodayCheckinLeaderboard("1990-01-01", 10)
+					require.NoError(t, err)
+					assert.Empty(t, empty, "users who did not check in are omitted")
 				})
 			}
 		})

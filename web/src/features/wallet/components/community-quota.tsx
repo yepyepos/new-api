@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next'
 
 import { ErrorState } from '@/components/error-state'
 import { SectionPageLayout } from '@/components/layout'
+import { CommunityLeaderboard } from '@/features/community-leaderboard'
 import { CheckinCalendarCard } from '@/features/profile/components/checkin-calendar-card'
 import { useStatus } from '@/hooks/use-status'
+import { ROLE } from '@/lib/roles'
 import { getSelf } from '@/lib/api'
 import { requireServerSuccess } from '@/lib/server-error-message'
+import { useAuthStore } from '@/stores/auth-store'
 
 import type { UserWalletData } from '../types'
 import { WalletStatsCard } from './wallet-stats-card'
@@ -14,6 +17,10 @@ import { WalletStatsCard } from './wallet-stats-card'
 export function CommunityQuota() {
   const { t } = useTranslation()
   const { status } = useStatus()
+  const isAdmin =
+    (useAuthStore((state) => state.auth.user?.role) ?? ROLE.GUEST) >= ROLE.ADMIN
+  const leaderboardVisible =
+    isAdmin || status?.community_leaderboard_public === true
   const user = useQuery<UserWalletData>({
     queryKey: ['community-quota'],
     queryFn: async () => requireServerSuccess(await getSelf()).data,
@@ -43,6 +50,7 @@ export function CommunityQuota() {
               onCheckinSuccess={() => void user.refetch()}
             />
           )}
+          {leaderboardVisible && <CommunityLeaderboard />}
         </div>
       </SectionPageLayout.Content>
     </SectionPageLayout>

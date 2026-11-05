@@ -365,6 +365,7 @@ export type BillingSettings = {
   'checkin_setting.threshold_enabled': boolean
   'checkin_setting.balance_threshold': number
   'checkin_setting.timezone': string
+  'community_leaderboard.public_enabled': boolean
 }
 
 export type OperationsSettings = {

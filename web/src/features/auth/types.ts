@@ -192,6 +192,8 @@ export interface SystemStatus {
   quota_remind_enabled?: boolean
   /** Site default low balance reminder threshold, in quota units */
   quota_remind_threshold?: number
+  /** Community leaderboards are visible to regular users */
+  community_leaderboard_public?: boolean
   [key: string]: unknown
 }
 

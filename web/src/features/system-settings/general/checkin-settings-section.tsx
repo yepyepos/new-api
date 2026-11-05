@@ -48,10 +48,13 @@ import { useUpdateOption } from '../hooks/use-update-option'
 
 type Values = {
   enabled: boolean
+  minQuota: number
+  maxQuota: number
   quota: number
   thresholdEnabled: boolean
   balanceThreshold: number
   timezone: string
+  leaderboardPublic: boolean
 }
 
 export function CheckinSettingsSection(props: { defaultValues: Values }) {
@@ -64,31 +67,62 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
     Number.isFinite(configuredQuotaPerUnit) && configuredQuotaPerUnit > 0
       ? configuredQuotaPerUnit
       : DEFAULT_CURRENCY_CONFIG.quotaPerUnit
-  const schema = z.object({
-    enabled: z.boolean(),
-    quota: z.coerce
-      .number()
-      .min(1 / quotaPerUnit)
-      .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
-      .refine(
-        (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
-        t('Please enter a valid number')
-      ),
-    thresholdEnabled: z.boolean(),
-    balanceThreshold: z.coerce
-      .number()
-      .min(0)
-      .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
-      .refine(
-        (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
-        t('Please enter a valid number')
-      ),
-    timezone: z.string().min(1),
-  })
+  const schema = z
+    .object({
+      enabled: z.boolean(),
+      minQuota: z.coerce
+        .number()
+        .min(0)
+        .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
+        .refine(
+          (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
+          t('Please enter a valid number')
+        ),
+      maxQuota: z.coerce
+        .number()
+        .min(0)
+        .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
+        .refine(
+          (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
+          t('Please enter a valid number')
+        ),
+      quota: z.coerce
+        .number()
+        .min(1 / quotaPerUnit)
+        .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
+        .refine(
+          (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
+          t('Please enter a valid number')
+        ),
+      thresholdEnabled: z.boolean(),
+      balanceThreshold: z.coerce
+        .number()
+        .min(0)
+        .max(Number.MAX_SAFE_INTEGER / quotaPerUnit)
+        .refine(
+          (value) => Number.isSafeInteger(Math.round(value * quotaPerUnit)),
+          t('Please enter a valid number')
+        ),
+      timezone: z.string().min(1),
+      leaderboardPublic: z.boolean(),
+    })
+    .refine(
+      (values) =>
+        (values.minQuota === 0) === (values.maxQuota === 0) &&
+        (values.minQuota === 0 || values.maxQuota >= values.minQuota),
+      {
+        message: t(
+          'Set both rewards to enable the range, or leave both at zero to use the fallback reward'
+        ),
+        path: ['maxQuota'],
+      }
+    )
   const form = useForm<Values>({
     resolver: zodResolver(schema) as Resolver<Values>,
     defaultValues: {
       ...props.defaultValues,
+      minQuota: props.defaultValues.minQuota / quotaPerUnit,
+      maxQuota: props.defaultValues.maxQuota / quotaPerUnit,
       quota: props.defaultValues.quota / quotaPerUnit,
       balanceThreshold: props.defaultValues.balanceThreshold / quotaPerUnit,
     },
@@ -98,7 +132,12 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
   async function onSubmit(values: Values) {
     // Only the editor uses USD; retain the stored quota API and untouched amounts.
     const storedValues = { ...values }
-    for (const field of ['quota', 'balanceThreshold'] as const) {
+    for (const field of [
+      'minQuota',
+      'maxQuota',
+      'quota',
+      'balanceThreshold',
+    ] as const) {
       storedValues[field] =
         values[field] === props.defaultValues[field] / quotaPerUnit
           ? props.defaultValues[field]
@@ -106,15 +145,20 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
     }
     const keys = {
       enabled: 'enabled',
+      minQuota: 'min_quota',
+      maxQuota: 'max_quota',
       quota: 'quota',
       thresholdEnabled: 'threshold_enabled',
       balanceThreshold: 'balance_threshold',
       timezone: 'timezone',
+      leaderboardPublic: 'public_enabled',
     } as const
     for (const field of Object.keys(keys) as (keyof Values)[]) {
       if (storedValues[field] !== props.defaultValues[field]) {
         await updateOption.mutateAsync({
-          key: `checkin_setting.${keys[field]}`,
+          key: field === 'leaderboardPublic'
+            ? 'community_leaderboard.public_enabled'
+            : `checkin_setting.${keys[field]}`,
           value: String(storedValues[field]),
         })
       }
@@ -158,10 +202,10 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
           <div className='grid gap-6 sm:grid-cols-2'>
             <FormField
               control={form.control}
-              name='quota'
+              name='minQuota'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Fixed check-in reward (USD)')}</FormLabel>
+                  <FormLabel>{t('Minimum check-in reward (USD)')}</FormLabel>
                   <FormControl>
                     <Input
                       type='number'
@@ -172,25 +216,23 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
                       disabled={pending}
                     />
                   </FormControl>
-                  <FormDescription>
-                    {t(
-                      'Enter USD. Saved automatically as internal quota units; the full reward can exceed the balance threshold.'
-                    )}
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
-              name='timezone'
+              name='maxQuota'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Check-in timezone')}</FormLabel>
+                  <FormLabel>{t('Maximum check-in reward (USD)')}</FormLabel>
                   <FormControl>
                     <Input
+                      type='number'
+                      min={1 / quotaPerUnit}
+                      max={Number.MAX_SAFE_INTEGER / quotaPerUnit}
+                      step='any'
                       {...field}
-                      placeholder='Asia/Hong_Kong'
                       disabled={pending}
                     />
                   </FormControl>
@@ -199,6 +241,48 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
               )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name='quota'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Fallback fixed check-in reward (USD)')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={1 / quotaPerUnit}
+                    max={Number.MAX_SAFE_INTEGER / quotaPerUnit}
+                    step='any'
+                    {...field}
+                    disabled={pending}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Used when no reward range is set. Enter USD and it is saved as internal quota units.'
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='timezone'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Check-in timezone')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder='Asia/Hong_Kong'
+                    disabled={pending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name='thresholdEnabled'
@@ -245,6 +329,29 @@ export function CheckinSettingsSection(props: { defaultValues: Values }) {
                 </FormDescription>
                 <FormMessage />
               </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='leaderboardPublic'
+            render={({ field }) => (
+              <SettingsSwitchItem>
+                <SettingsSwitchContent>
+                  <FormLabel>{t('Show leaderboards to users')}</FormLabel>
+                  <FormDescription>
+                    {t(
+                      'Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.'
+                    )}
+                  </FormDescription>
+                </SettingsSwitchContent>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={pending}
+                  />
+                </FormControl>
+              </SettingsSwitchItem>
             )}
           />
         </SettingsForm>

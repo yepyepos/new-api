@@ -65,10 +65,11 @@ func UserCheckin(userId int) (*Checkin, error) {
 	if err != nil {
 		return nil, err
 	}
+	awarded := setting.AwardQuota()
 	checkin := &Checkin{
 		UserId:       userId,
 		CheckinDate:  today,
-		QuotaAwarded: setting.Quota,
+		QuotaAwarded: awarded,
 		CreatedAt:    time.Now().Unix(),
 	}
 
@@ -93,7 +94,7 @@ func UserCheckin(userId int) (*Checkin, error) {
 		if user.Quota < -common.MaxWalletQuota || user.Quota > common.MaxWalletQuota {
 			return ErrWalletQuotaLimitExceeded
 		}
-		if _, err := common.WalletQuotaFromDecimalStrict(decimal.NewFromInt(int64(user.Quota)).Add(decimal.NewFromInt(int64(setting.Quota)))); err != nil {
+		if _, err := common.WalletQuotaFromDecimalStrict(decimal.NewFromInt(int64(user.Quota)).Add(decimal.NewFromInt(int64(awarded)))); err != nil {
 			return ErrWalletQuotaLimitExceeded
 		}
 		// The record and full reward commit together, including on SQLite.
@@ -101,7 +102,7 @@ func UserCheckin(userId int) (*Checkin, error) {
 			return common.NewMessage("Check-in failed, please try again later")
 		}
 		result := tx.Model(&User{}).Where("id = ? AND quota = ? AND status = ?", userId, user.Quota, common.UserStatusEnabled).
-			Update("quota", gorm.Expr("quota + ?", setting.Quota))
+			Update("quota", gorm.Expr("quota + ?", awarded))
 		if result.Error != nil {
 			return common.NewMessage("Check-in failed: quota update error")
 		}
@@ -115,7 +116,7 @@ func UserCheckin(userId int) (*Checkin, error) {
 		return nil, err
 	}
 
-	if err := cacheIncrUserQuota(userId, int64(setting.Quota)); err != nil {
+	if err := cacheIncrUserQuota(userId, int64(awarded)); err != nil {
 		common.SysError(common.LogText("failed to sync check-in quota for user %d: %s", userId, err))
 	}
 

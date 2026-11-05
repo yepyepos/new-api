@@ -2906,7 +2906,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Projets liés",
     "footer.defaultCopyright": "Tous droits réservés.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
+    "footer.newapi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Pour les canaux personnalisés avancés, ceci ne s’applique qu’aux routes /v1/responses sans conversion de protocole.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Pour les canaux ajoutés après le 10 mai 2025, pas besoin de supprimer \".\" des noms de modèles lors du déploiement",
     "For private deployments, format: https://fastgpt.run/api/openapi": "Pour les déploiements privés, format : https://fastgpt.run/api/openapi",
@@ -7537,6 +7537,19 @@
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "Une fois activé, toutes les clés API sont invalidées une fois par jour à l'heure configurée. Les utilisateurs doivent créer une nouvelle clé pour continuer. Cette action est irréversible.",
     "e.g. 1, 7, 42": "ex. 1, 7, 42",
     "token name": "nom de la clé",
-    "Save closure notice": "Enregistrer l'avis de fermeture"
+    "Save closure notice": "Enregistrer l'avis de fermeture",
+    "Minimum check-in reward (USD)": "Récompense minimale de check-in (USD)",
+    "Maximum check-in reward (USD)": "Récompense maximale de check-in (USD)",
+    "Fallback fixed check-in reward (USD)": "Récompense fixe de secours (USD)",
+    "Used when no reward range is set. Enter USD and it is saved as internal quota units.": "Utilisée quand aucune plage n'est définie. Saisie en USD, convertie en unités de quota internes.",
+    "Random check-in reward range": "Plage de récompense aléatoire",
+    "Show leaderboards to users": "Afficher les classements aux utilisateurs",
+    "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.": "Permet aux utilisateurs de voir les classements de check-in et d'utilisation. Les administrateurs y ont toujours accès.",
+    "Today's check-in leaderboard": "Classement des check-ins du jour",
+    "Usage leaderboard": "Classement d'utilisation",
+    "No one has checked in today yet.": "Personne n'a encore fait de check-in aujourd'hui.",
+    "No usage recorded for this period.": "Aucune utilisation enregistrée sur cette période.",
+    "All time": "Tout l'historique",
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Renseignez les deux pour activer la plage, ou laissez les deux à zéro pour utiliser la récompense de secours"
   }
 }

@@ -1,6 +1,7 @@
 package operation_setting
 
 import (
+	"math/rand/v2"
 	"time"
 	_ "time/tzdata"
 
@@ -22,8 +23,8 @@ type CheckinSetting struct {
 // 默认配置
 var checkinSetting = CheckinSetting{
 	Enabled:  false, // 默认关闭
-	MinQuota: 1000,  // 默认最小额度 1000 (约 0.002 USD)
-	MaxQuota: 10000, // 默认最大额度 10000 (约 0.02 USD)
+	MinQuota: 0,     // 未配置区间时沿用 Quota 固定值
+	MaxQuota: 0,
 	Quota:    1000,
 	Timezone: "Asia/Hong_Kong",
 }
@@ -37,6 +38,12 @@ func CheckinSettingsSnapshot() CheckinSetting {
 func (s CheckinSetting) Validate() error {
 	if s.Quota < 1 || s.Quota > common.MaxWalletQuota || s.BalanceThreshold < 0 || s.BalanceThreshold > common.MaxWalletQuota {
 		return common.NewMessage("Invalid parameters")
+	}
+	// Both range ends stay zero until the operator configures a range.
+	if s.MinQuota != 0 || s.MaxQuota != 0 {
+		if s.MinQuota < 1 || s.MaxQuota < s.MinQuota || s.MaxQuota > common.MaxWalletQuota {
+			return common.NewMessage("Invalid check-in reward range")
+		}
 	}
 	if _, err := time.LoadLocation(s.Timezone); err != nil {
 		return common.NewMessage("Invalid check-in timezone.")
@@ -70,4 +77,15 @@ func IsCheckinEnabled() bool {
 // GetCheckinQuotaRange 获取签到额度范围
 func GetCheckinQuotaRange() (min, max int) {
 	return checkinSetting.MinQuota, checkinSetting.MaxQuota
+}
+
+// AwardQuota draws the daily check-in reward. When the operator has not set a
+// range (MinQuota or MaxQuota is zero), the legacy fixed quota is returned so
+// existing sites keep their configured amount until the range is configured.
+func (s CheckinSetting) AwardQuota() int {
+	minQuota, maxQuota := s.MinQuota, s.MaxQuota
+	if minQuota <= 0 || maxQuota < minQuota {
+		return s.Quota
+	}
+	return rand.IntN(maxQuota-minQuota+1) + minQuota
 }

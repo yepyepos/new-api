@@ -229,6 +229,8 @@ export interface CheckinStatusResponse {
   /** Whether check-in feature is enabled */
   enabled: boolean
   quota: number
+  min_quota: number
+  max_quota: number
   threshold_enabled: boolean
   balance_threshold: number
   timezone: string

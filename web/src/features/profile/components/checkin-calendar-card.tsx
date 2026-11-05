@@ -479,8 +479,9 @@ export function CheckinCalendarCard({
                 <div className='bg-muted/30 text-muted-foreground rounded-lg border p-3 text-xs'>
                   <ul className='list-disc space-y-1 pl-5'>
                     <li>
-                      {t('Fixed check-in reward')}:{' '}
-                      {formatQuotaWithCurrency(checkinData?.quota || 0)}
+                      {t('Random check-in reward range')}:{' '}
+                      {formatQuotaWithCurrency(checkinData?.min_quota ?? 0)} –{' '}
+                      {formatQuotaWithCurrency(checkinData?.max_quota ?? 0)}
                     </li>
                     <li>
                       {t('Rewards will be added directly to your balance')}

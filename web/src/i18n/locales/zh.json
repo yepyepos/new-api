@@ -2906,7 +2906,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "相关项目",
     "footer.defaultCopyright": "版权所有。",
-    "footer.new\u0061pi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
+    "footer.newapi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "高级自定义渠道仅对 /v1/responses 且不做协议转换的路由生效。",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "对于 2025 年 5 月 10 日之后添加的渠道，在部署时无需从模型名称中移除 \".\"",
     "For private deployments, format: https://fastgpt.run/api/openapi": "对于私有部署，格式为：https://fastgpt.run/api/openapi",
@@ -7537,6 +7537,19 @@
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "开启后，每天到达指定时刻会失效全部 API Key，用户需自行重新创建才能继续使用。该操作不可撤销。",
     "e.g. 1, 7, 42": "例如 1, 7, 42",
     "token name": "API Key 名称",
-    "Save closure notice": "保存闭站公告"
+    "Save closure notice": "保存闭站公告",
+    "Minimum check-in reward (USD)": "签到最低奖励（美元）",
+    "Maximum check-in reward (USD)": "签到最高奖励（美元）",
+    "Fallback fixed check-in reward (USD)": "兜底固定签到奖励（美元）",
+    "Used when no reward range is set. Enter USD and it is saved as internal quota units.": "未设置奖励区间时使用。以美元填写，保存为内部额度单位。",
+    "Random check-in reward range": "签到随机奖励区间",
+    "Show leaderboards to users": "向用户展示排行榜",
+    "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.": "允许普通用户查看每日签到排行榜与用量排行榜。管理员始终可见。",
+    "Today's check-in leaderboard": "今日签到排行榜",
+    "Usage leaderboard": "用量排行榜",
+    "No one has checked in today yet.": "今天还没有人签到。",
+    "No usage recorded for this period.": "该时间段暂无用量记录。",
+    "All time": "全部时间",
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "两项都填写才能启用区间；两项都留 0 则使用兜底奖励"
   }
 }

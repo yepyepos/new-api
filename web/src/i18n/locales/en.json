@@ -2906,7 +2906,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Related Projects",
     "footer.defaultCopyright": "All rights reserved.",
-    "footer.new\u0061pi.projectAttributionSuffix": "All rights reserved. Designed and developed by the project contributors.",
+    "footer.newapi.projectAttributionSuffix": "All rights reserved. Designed and developed by the project contributors.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment",
     "For private deployments, format: https://fastgpt.run/api/openapi": "For private deployments, format: https://fastgpt.run/api/openapi",
@@ -7537,6 +7537,19 @@
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.",
     "e.g. 1, 7, 42": "e.g. 1, 7, 42",
     "token name": "token name",
-    "Save closure notice": "Save closure notice"
+    "Save closure notice": "Save closure notice",
+    "Minimum check-in reward (USD)": "Minimum check-in reward (USD)",
+    "Maximum check-in reward (USD)": "Maximum check-in reward (USD)",
+    "Fallback fixed check-in reward (USD)": "Fallback fixed check-in reward (USD)",
+    "Used when no reward range is set. Enter USD and it is saved as internal quota units.": "Used when no reward range is set. Enter USD and it is saved as internal quota units.",
+    "Random check-in reward range": "Random check-in reward range",
+    "Show leaderboards to users": "Show leaderboards to users",
+    "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.": "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.",
+    "Today's check-in leaderboard": "Today's check-in leaderboard",
+    "Usage leaderboard": "Usage leaderboard",
+    "No one has checked in today yet.": "No one has checked in today yet.",
+    "No usage recorded for this period.": "No usage recorded for this period.",
+    "All time": "All time",
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Set both rewards to enable the range, or leave both at zero to use the fallback reward"
   }
 }

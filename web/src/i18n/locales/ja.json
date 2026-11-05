@@ -2906,7 +2906,7 @@
     "footer.columns.related.links.oneApi": "1つのAPI",
     "footer.columns.related.title": "関連プロジェクト",
     "footer.defaultCopyright": "すべての権利を留保します。",
-    "footer.new\u0061pi.projectAttributionSuffix": "すべての権利を留保します。プロジェクトコントリビューターにより設計・開発されています。",
+    "footer.newapi.projectAttributionSuffix": "すべての権利を留保します。プロジェクトコントリビューターにより設計・開発されています。",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "高度なカスタムチャネルでは、プロトコル変換を行わない /v1/responses ルートにのみ適用されます。",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "2025 年 5 月 10 日以降に追加されたチャネルの場合、デプロイ時にモデル名から「.」を削除する必要はありません",
     "For private deployments, format: https://fastgpt.run/api/openapi": "プライベートデプロイメントの場合、形式: https://fastgpt.run/api/openapi",
@@ -7537,6 +7537,19 @@
     "When enabled, every API key is invalidated once a day at the configured time. Users must create a new key before they can continue. This cannot be undone.": "有効にすると、設定した時刻に毎日すべての API キーが無効になります。ユーザーは続行する前に新しいキーを作成する必要があります。この操作は元に戻せません。",
     "e.g. 1, 7, 42": "例: 1, 7, 42",
     "token name": "キー名",
-    "Save closure notice": "閉鎖のお知らせを保存"
+    "Save closure notice": "閉鎖のお知らせを保存",
+    "Minimum check-in reward (USD)": "チェックイン最小報酬（USD）",
+    "Maximum check-in reward (USD)": "チェックイン最大報酬（USD）",
+    "Fallback fixed check-in reward (USD)": "予備の固定チェックイン報酬（USD）",
+    "Used when no reward range is set. Enter USD and it is saved as internal quota units.": "報酬範囲が未設定の場合に使用。USDで入力し、内部クォータ単位で保存されます。",
+    "Random check-in reward range": "チェックイン報酬のランダム範囲",
+    "Show leaderboards to users": "ユーザーにランキングを表示",
+    "Lets regular users see the daily check-in and usage leaderboards. Admins can always see them.": "一般ユーザーがチェックインと利用量のランキングを閲覧できるようにします。管理者は常に表示できます。",
+    "Today's check-in leaderboard": "今日のチェックインランキング",
+    "Usage leaderboard": "利用量ランキング",
+    "No one has checked in today yet.": "今日はまだ誰もチェックインしていません。",
+    "No usage recorded for this period.": "この期間の利用記録はありません。",
+    "All time": "全期間",
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "範囲を有効にするには両方を入力してください。両方 0 の場合は予備報酬を使用します"
   }
 }

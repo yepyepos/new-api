@@ -71,3 +71,84 @@ it('uses the site day and keeps the daily chance available after a balance rejec
   )
   expect(post).toHaveBeenCalledTimes(2)
 })
+
+it('shows the fixed reward when the operator has not configured a range', async () => {
+  vi.spyOn(api, 'get').mockImplementation(async () => ({
+    data: {
+      success: true,
+      data: {
+        enabled: true,
+        min_quota: 0,
+        max_quota: 0,
+        quota: 50,
+        today: '2026-06-15',
+        timezone: 'Asia/Hong_Kong',
+        threshold_enabled: false,
+        balance_threshold: 0,
+        stats: {
+          checked_in_today: false,
+          total_quota: 0,
+          total_checkins: 0,
+          checkin_count: 0,
+          records: [],
+        },
+      },
+    },
+  }))
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  render(
+    <QueryClientProvider client={client}>
+      <CheckinCalendarCard
+        checkinEnabled
+        turnstileEnabled={false}
+        turnstileSiteKey=''
+      />
+    </QueryClientProvider>
+  )
+  expect(await screen.findByRole('heading', { name: '2026-06' })).toBeVisible()
+  expect(screen.getByText(/Check-in reward:/)).toBeVisible()
+  expect(
+    screen.queryByText(/Random check-in reward range/)
+  ).not.toBeInTheDocument()
+})
+
+it('shows the random reward range once the operator configures one', async () => {
+  vi.spyOn(api, 'get').mockImplementation(async () => ({
+    data: {
+      success: true,
+      data: {
+        enabled: true,
+        min_quota: 1000000,
+        max_quota: 2500000,
+        quota: 50,
+        today: '2026-06-15',
+        timezone: 'Asia/Hong_Kong',
+        threshold_enabled: false,
+        balance_threshold: 0,
+        stats: {
+          checked_in_today: false,
+          total_quota: 0,
+          total_checkins: 0,
+          checkin_count: 0,
+          records: [],
+        },
+      },
+    },
+  }))
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  render(
+    <QueryClientProvider client={client}>
+      <CheckinCalendarCard
+        checkinEnabled
+        turnstileEnabled={false}
+        turnstileSiteKey=''
+      />
+    </QueryClientProvider>
+  )
+  expect(await screen.findByRole('heading', { name: '2026-06' })).toBeVisible()
+  expect(screen.getByText(/Random check-in reward range/)).toBeVisible()
+})

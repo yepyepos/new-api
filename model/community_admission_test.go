@@ -191,6 +191,13 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					require.NoError(t, fixedErr)
 					assert.Equal(t, 70, fixed.QuotaAwarded)
 					assert.Error(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: 70, MaxQuota: 60, Timezone: "UTC"}).Validate(), "an inverted range must be rejected")
+					// The console saves each range end in its own request, so a
+					// half-configured range must stay valid; only an inverted or
+					// out-of-range pair is rejected.
+					assert.NoError(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: 40, MaxQuota: 0, Timezone: "UTC"}).Validate(), "a pending maximum must be accepted")
+					assert.NoError(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: 0, MaxQuota: 60, Timezone: "UTC"}).Validate(), "a pending minimum must be accepted")
+					assert.Error(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: -1, MaxQuota: 60, Timezone: "UTC"}).Validate(), "a negative minimum must be rejected")
+					assert.Error(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: 40, MaxQuota: common.MaxWalletQuota + 1, Timezone: "UTC"}).Validate(), "a maximum above the wallet limit must be rejected")
 					*operation_setting.GetCheckinSetting() = operation_setting.CheckinSetting{Enabled: true, Quota: 50, ThresholdEnabled: true, BalanceThreshold: 100, Timezone: "Asia/Hong_Kong"}
 					require.NoError(t, DB.Model(ordinary).Update("quota", 1).Error)
 					operation_setting.GetCheckinSetting().ThresholdEnabled = false

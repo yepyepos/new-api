@@ -125,6 +125,9 @@ export function CheckinCalendarCard({
 
   const checkedToday = checkinData?.stats?.checked_in_today === true
   const todayAward = checkinRecordsMap[todayString]
+  // The operator can leave the range empty, in which case the fixed reward applies.
+  const hasRewardRange =
+    (checkinData?.min_quota ?? 0) > 0 && (checkinData?.max_quota ?? 0) > 0
 
   useEffect(() => {
     if (initialLoaded) return
@@ -478,11 +481,18 @@ export function CheckinCalendarCard({
 
                 <div className='bg-muted/30 text-muted-foreground rounded-lg border p-3 text-xs'>
                   <ul className='list-disc space-y-1 pl-5'>
-                    <li>
-                      {t('Random check-in reward range')}:{' '}
-                      {formatQuotaWithCurrency(checkinData?.min_quota ?? 0)} –{' '}
-                      {formatQuotaWithCurrency(checkinData?.max_quota ?? 0)}
-                    </li>
+                    {hasRewardRange ? (
+                      <li>
+                        {t('Random check-in reward range')}:{' '}
+                        {formatQuotaWithCurrency(checkinData?.min_quota ?? 0)} –{' '}
+                        {formatQuotaWithCurrency(checkinData?.max_quota ?? 0)}
+                      </li>
+                    ) : (
+                      <li>
+                        {t('Check-in reward')}:{' '}
+                        {formatQuotaWithCurrency(checkinData?.quota ?? 0)}
+                      </li>
+                    )}
                     <li>
                       {t('Rewards will be added directly to your balance')}
                     </li>

@@ -45,17 +45,24 @@ afterEach(() => {
   useAuthStore.getState().auth.reset()
 })
 
-function sidebarFor(admin?: object, user?: object, canConfigure = true) {
+function sidebarFor(
+  admin?: object,
+  user?: object,
+  canConfigure = true,
+  leaderboardPublic = false,
+  role = 1
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   client.setQueryData(['status'], {
     SidebarModulesAdmin: admin ? JSON.stringify(admin) : '',
+    community_leaderboard_public: leaderboardPublic,
   })
   useAuthStore.getState().auth.setUser({
     id: 1,
     username: 'alice',
-    role: 1,
+    role,
     permissions: { sidebar_settings: canConfigure },
     sidebar_modules: user ? JSON.stringify(user) : '',
   })
@@ -118,6 +125,56 @@ describe('security sidebar visibility', () => {
         .some((item) => item.title === 'Security & Access')
     ).toBe(true)
   })
+})
+
+describe('leaderboards sidebar entry', () => {
+  it('shows the leaderboards link to administrators under legacy configurations', () => {
+    const { result } = sidebarFor(
+      { personal: { enabled: true, personal: true } },
+      { personal: { enabled: true, personal: true } },
+      true,
+      false,
+      10
+    )
+    expect(
+      result.current
+        .find((group) => group.id === 'personal')
+        ?.items.map((item) => item.title)
+    ).toContain('Leaderboards')
+  })
+
+  it('hides the leaderboards link from regular users while the public switch is off', () => {
+    const { result } = sidebarFor()
+    expect(
+      result.current
+        .flatMap((group) => group.items)
+        .some((item) => item.title === 'Leaderboards')
+    ).toBe(false)
+  })
+
+  it('shows the leaderboards link to regular users once the public switch is on', () => {
+    const { result } = sidebarFor(undefined, undefined, true, true)
+    expect(
+      result.current
+        .flatMap((group) => group.items)
+        .some((item) => item.title === 'Leaderboards')
+    ).toBe(true)
+  })
+
+  it.each([
+    [{ personal: { enabled: true, leaderboard: false } }, undefined],
+    [undefined, { personal: { enabled: true, leaderboard: false } }],
+  ])(
+    'admin or user disablement hides Leaderboards (%j, %j)',
+    (admin, user) => {
+      const { result } = sidebarFor(admin, user, true, true)
+      expect(
+        result.current
+          .flatMap((group) => group.items)
+          .some((item) => item.title === 'Leaderboards')
+      ).toBe(false)
+    }
+  )
 })
 
 describe('audit log sidebar entry', () => {

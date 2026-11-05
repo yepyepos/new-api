@@ -7550,6 +7550,11 @@
     "No one has checked in today yet.": "今日はまだ誰もチェックインしていません。",
     "No usage recorded for this period.": "この期間の利用記録はありません。",
     "All time": "全期間",
-    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "範囲を有効にするには両方を入力してください。両方 0 の場合は予備報酬を使用します"
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "範囲を有効にするには両方を入力してください。両方 0 の場合は予備報酬を使用します",
+    "Check-in reward": "チェックイン報酬",
+    "Check-in rewards and model usage rankings.": "チェックイン報酬とモデル消費のランキング。",
+    "Leaderboard is not available": "ランキングを利用できません",
+    "Invalid check-in reward range": "チェックイン報酬の範囲が無効です",
+    "Invalid leaderboard period": "ランキングの期間が無効です"
   }
 }

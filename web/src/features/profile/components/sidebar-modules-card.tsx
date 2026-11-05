@@ -131,6 +131,11 @@ export function SidebarModulesCard() {
           title: t('Security & Access'),
           description: t('Manage your security settings and account access'),
         },
+        {
+          key: 'leaderboard',
+          title: t('Leaderboards'),
+          description: t('Check-in rewards and model usage rankings.'),
+        },
       ],
     },
   ]

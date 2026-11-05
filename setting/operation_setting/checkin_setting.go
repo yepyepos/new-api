@@ -39,11 +39,14 @@ func (s CheckinSetting) Validate() error {
 	if s.Quota < 1 || s.Quota > common.MaxWalletQuota || s.BalanceThreshold < 0 || s.BalanceThreshold > common.MaxWalletQuota {
 		return common.NewMessage("Invalid parameters")
 	}
-	// Both range ends stay zero until the operator configures a range.
-	if s.MinQuota != 0 || s.MaxQuota != 0 {
-		if s.MinQuota < 1 || s.MaxQuota < s.MinQuota || s.MaxQuota > common.MaxWalletQuota {
-			return common.NewMessage("Invalid check-in reward range")
-		}
+	// The web console saves one option key per request, so the two range ends
+	// arrive in separate requests and one of them is still zero in between.
+	// AwardQuota falls back to the fixed reward while a range is incomplete.
+	if s.MinQuota < 0 || s.MaxQuota < 0 || s.MinQuota > common.MaxWalletQuota || s.MaxQuota > common.MaxWalletQuota {
+		return common.NewMessage("Invalid check-in reward range")
+	}
+	if s.MinQuota > 0 && s.MaxQuota > 0 && s.MaxQuota < s.MinQuota {
+		return common.NewMessage("Invalid check-in reward range")
 	}
 	if _, err := time.LoadLocation(s.Timezone); err != nil {
 		return common.NewMessage("Invalid check-in timezone.")

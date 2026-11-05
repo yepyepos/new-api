@@ -34,6 +34,7 @@ import {
   Settings,
   ShieldCheck,
   Ticket,
+  Trophy,
   User,
   Users,
   Wallet,
@@ -41,6 +42,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
+import { useCommunityLeaderboardVisible } from '@/features/community-leaderboard/hooks/use-leaderboard-access'
 import { isCommercialPage } from '@/lib/community-mode'
 import { ROLE } from '@/lib/roles'
 
@@ -55,6 +57,7 @@ import { usePublicBenefitMode } from './use-public-benefit-mode'
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
   const publicBenefitMode = usePublicBenefitMode()
+  const leaderboardVisible = useCommunityLeaderboardVisible()
 
   const data: SidebarData = {
     navGroups: [
@@ -131,6 +134,15 @@ export function useSidebarData(): SidebarData {
             url: '/security',
             icon: ShieldCheck,
           },
+          ...(leaderboardVisible
+            ? [
+                {
+                  title: t('Leaderboards'),
+                  url: '/leaderboards' as const,
+                  icon: Trophy,
+                },
+              ]
+            : []),
         ],
       },
       {

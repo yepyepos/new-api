@@ -73,6 +73,7 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
     topup: true,
     personal: true,
     security: true,
+    leaderboard: true,
   },
   admin: {
     enabled: true,

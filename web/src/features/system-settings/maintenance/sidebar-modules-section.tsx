@@ -136,6 +136,10 @@ export function SidebarModulesSection({
         title: t('Security & Access'),
         description: t('Manage your security settings and account access'),
       },
+      leaderboard: {
+        title: t('Leaderboards'),
+        description: t('Check-in rewards and model usage rankings.'),
+      },
     },
     admin: {
       channel: {

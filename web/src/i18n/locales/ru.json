@@ -7550,6 +7550,11 @@
     "No one has checked in today yet.": "Сегодня ещё никто не заходил.",
     "No usage recorded for this period.": "За этот период использование не зафиксировано.",
     "All time": "За всё время",
-    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Заполните оба поля, чтобы включить диапазон, либо оставьте оба нулевыми для резервной награды"
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Заполните оба поля, чтобы включить диапазон, либо оставьте оба нулевыми для резервной награды",
+    "Check-in reward": "Награда за отметку",
+    "Check-in rewards and model usage rankings.": "Награды за отметку и рейтинги расхода.",
+    "Leaderboard is not available": "Рейтинг недоступен",
+    "Invalid check-in reward range": "Недопустимый диапазон награды за отметку",
+    "Invalid leaderboard period": "Недопустимый период рейтинга"
   }
 }

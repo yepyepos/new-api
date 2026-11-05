@@ -7550,6 +7550,11 @@
     "No one has checked in today yet.": "今天還沒有人簽到。",
     "No usage recorded for this period.": "該時段暫無用量記錄。",
     "All time": "全部時間",
-    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "兩項都填寫才能啟用區間；兩項都留 0 則使用備援獎勵"
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "兩項都填寫才能啟用區間；兩項都留 0 則使用備援獎勵",
+    "Check-in reward": "簽到獎勵",
+    "Check-in rewards and model usage rankings.": "簽到獎勵與模型消耗排行榜。",
+    "Leaderboard is not available": "排行榜不可用",
+    "Invalid check-in reward range": "簽到獎勵區間無效",
+    "Invalid leaderboard period": "排行榜時間範圍無效"
   }
 }

@@ -7550,6 +7550,11 @@
     "No one has checked in today yet.": "No one has checked in today yet.",
     "No usage recorded for this period.": "No usage recorded for this period.",
     "All time": "All time",
-    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Set both rewards to enable the range, or leave both at zero to use the fallback reward"
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Set both rewards to enable the range, or leave both at zero to use the fallback reward",
+    "Check-in reward": "Check-in reward",
+    "Check-in rewards and model usage rankings.": "Check-in rewards and model usage rankings.",
+    "Leaderboard is not available": "Leaderboard is not available",
+    "Invalid check-in reward range": "Invalid check-in reward range",
+    "Invalid leaderboard period": "Invalid leaderboard period"
   }
 }

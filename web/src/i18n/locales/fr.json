@@ -7550,6 +7550,11 @@
     "No one has checked in today yet.": "Personne n'a encore fait de check-in aujourd'hui.",
     "No usage recorded for this period.": "Aucune utilisation enregistrée sur cette période.",
     "All time": "Tout l'historique",
-    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Renseignez les deux pour activer la plage, ou laissez les deux à zéro pour utiliser la récompense de secours"
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Renseignez les deux pour activer la plage, ou laissez les deux à zéro pour utiliser la récompense de secours",
+    "Check-in reward": "Récompense de pointage",
+    "Check-in rewards and model usage rankings.": "Récompenses de pointage et classements de consommation.",
+    "Leaderboard is not available": "Classement indisponible",
+    "Invalid check-in reward range": "Plage de récompense de pointage invalide",
+    "Invalid leaderboard period": "Période de classement invalide"
   }
 }

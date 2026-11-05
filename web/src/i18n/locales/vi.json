@@ -7550,6 +7550,11 @@
     "No one has checked in today yet.": "Hôm nay chưa có ai điểm danh.",
     "No usage recorded for this period.": "Không có dữ liệu sử dụng trong khoảng thời gian này.",
     "All time": "Toàn bộ thời gian",
-    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Nhập cả hai để bật khoảng thưởng, hoặc để cả hai bằng 0 để dùng phần thưởng dự phòng"
+    "Set both rewards to enable the range, or leave both at zero to use the fallback reward": "Nhập cả hai để bật khoảng thưởng, hoặc để cả hai bằng 0 để dùng phần thưởng dự phòng",
+    "Check-in reward": "Phần thưởng điểm danh",
+    "Check-in rewards and model usage rankings.": "Phần thưởng điểm danh và bảng xếp hạng tiêu dùng.",
+    "Leaderboard is not available": "Bảng xếp hạng không khả dụng",
+    "Invalid check-in reward range": "Khoảng thưởng điểm danh không hợp lệ",
+    "Invalid leaderboard period": "Khoảng thời gian bảng xếp hạng không hợp lệ"
   }
 }

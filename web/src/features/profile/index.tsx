@@ -22,8 +22,8 @@ import {
   CardStaggerItem,
 } from '@/components/page-transition'
 import { CommunityLeaderboard } from '@/features/community-leaderboard'
+import { useCommunityLeaderboardVisible } from '@/features/community-leaderboard/hooks/use-leaderboard-access'
 import { useStatus } from '@/hooks/use-status'
-import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { CheckinCalendarCard } from './components/checkin-calendar-card'
@@ -47,10 +47,7 @@ export function Profile() {
   // Older cached status payloads lack these fields; the site default is on.
   const quotaRemindEnabled = status?.quota_remind_enabled !== false
   const quotaRemindThreshold = status?.quota_remind_threshold ?? 0
-  const isAdmin =
-    (useAuthStore((s) => s.auth.user?.role) ?? ROLE.GUEST) >= ROLE.ADMIN
-  const leaderboardVisible =
-    isAdmin || status?.community_leaderboard_public === true
+  const leaderboardVisible = useCommunityLeaderboardVisible()
 
   return (
     <Main>

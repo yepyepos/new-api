@@ -48,7 +48,8 @@ import { createServerError } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
 import { getCheckinStatus, performCheckin } from '../api'
-import type { CheckinRecord } from '../types'
+import type { CheckinRecord, CheckinResponse } from '../types'
+import { CheckinSuccessDialog } from './checkin-success-dialog'
 
 interface CheckinCalendarCardProps {
   checkinEnabled: boolean
@@ -73,6 +74,10 @@ export function CheckinCalendarCard({
   const [turnstileWidgetKey, setTurnstileWidgetKey] = useState(0)
   const [initialLoaded, setInitialLoaded] = useState(false)
   const [collapsed, setCollapsed] = useState<boolean>(false)
+  const [successResult, setSuccessResult] = useState<CheckinResponse | null>(
+    null
+  )
+  const [successVisible, setSuccessVisible] = useState(false)
 
   const currentMonthStr = useMemo(() => {
     const y = currentMonth.getFullYear()
@@ -156,9 +161,10 @@ export function CheckinCalendarCard({
       try {
         const res = await performCheckin(token)
         if (res.success && res.data) {
-          toast.success(
-            `${t('Check-in successful! Received')} ${formatQuotaWithCurrency(res.data.quota_awarded)}`
-          )
+          // The dialog carries the award and the standings, so a toast on top of
+          // it would only repeat the same number.
+          setSuccessResult(res.data)
+          setSuccessVisible(true)
           refetch()
           onCheckinSuccess?.()
           setTurnstileModalVisible(false)
@@ -264,6 +270,11 @@ export function CheckinCalendarCard({
 
   return (
     <TooltipProvider delay={100}>
+      <CheckinSuccessDialog
+        open={successVisible}
+        result={successResult}
+        onClose={() => setSuccessVisible(false)}
+      />
       <Dialog
         open={turnstileModalVisible}
         onOpenChange={(open) => {

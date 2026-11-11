@@ -31,6 +31,8 @@ import {
 } from './components/leaderboard-lists'
 import {
   useCheckinLeaderboard,
+  useExpandedCheckinLeaderboard,
+  useExpandedUsageLeaderboard,
   useUsageLeaderboard,
 } from './hooks/use-leaderboards'
 
@@ -60,9 +62,16 @@ function PanelState(props: {
 export function CommunityLeaderboard() {
   const { t } = useTranslation()
   const [usagePeriod, setUsagePeriod] = useState<LeaderboardPeriod>('today')
+  const [checkinExpanded, setCheckinExpanded] = useState(false)
+  const [usageExpanded, setUsageExpanded] = useState(false)
 
   const checkinQuery = useCheckinLeaderboard()
   const usageQuery = useUsageLeaderboard(usagePeriod)
+  const expandedCheckinQuery = useExpandedCheckinLeaderboard(checkinExpanded)
+  const expandedUsageQuery = useExpandedUsageLeaderboard(
+    usagePeriod,
+    usageExpanded
+  )
   const checkinTotal = checkinQuery.data?.total ?? 0
   const usageTotal = usageQuery.data?.total ?? 0
 
@@ -81,7 +90,17 @@ export function CommunityLeaderboard() {
           failed={checkinQuery.isError}
           onRetry={() => void checkinQuery.refetch()}
         >
-          <CheckinLeaderboardList rows={checkinQuery.data?.rows ?? []} />
+          <CheckinLeaderboardList
+            top={checkinQuery.data?.top ?? []}
+            bottom={checkinQuery.data?.bottom ?? []}
+            total={checkinTotal}
+            full={expandedCheckinQuery.data}
+            expanded={checkinExpanded}
+            loading={expandedCheckinQuery.isLoading}
+            failed={expandedCheckinQuery.isError}
+            onRetry={() => void expandedCheckinQuery.refetch()}
+            onToggle={() => setCheckinExpanded((value) => !value)}
+          />
         </PanelState>
       </LeaderboardCard>
 
@@ -95,7 +114,10 @@ export function CommunityLeaderboard() {
       >
         <Tabs
           value={usagePeriod}
-          onValueChange={(value) => setUsagePeriod(value as LeaderboardPeriod)}
+          onValueChange={(value) => {
+            setUsagePeriod(value as LeaderboardPeriod)
+            setUsageExpanded(false)
+          }}
         >
           <TabsList className='mb-3'>
             {USAGE_PERIODS.map((period) => (
@@ -110,7 +132,17 @@ export function CommunityLeaderboard() {
               failed={usageQuery.isError}
               onRetry={() => void usageQuery.refetch()}
             >
-              <UsageLeaderboardList rows={usageQuery.data?.rows ?? []} />
+              <UsageLeaderboardList
+                top={usageQuery.data?.top ?? []}
+                bottom={usageQuery.data?.bottom ?? []}
+                total={usageTotal}
+                full={expandedUsageQuery.data}
+                expanded={usageExpanded}
+                loading={expandedUsageQuery.isLoading}
+                failed={expandedUsageQuery.isError}
+                onRetry={() => void expandedUsageQuery.refetch()}
+                onToggle={() => setUsageExpanded((value) => !value)}
+              />
             </PanelState>
           </TabsContent>
         </Tabs>

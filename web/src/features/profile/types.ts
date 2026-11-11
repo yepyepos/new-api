@@ -245,4 +245,16 @@ export interface CheckinStatusResponse {
 export interface CheckinResponse {
   /** Quota awarded for this check-in */
   quota_awarded: number
+  /** Order this check-in took among today's check-ins */
+  rank_today?: number
+  /** How many users had checked in today, this one included */
+  total_today?: number
+  /** Consecutive site days ending today, this one included */
+  streak_days?: number
+  /** Place of this award when today's awards are ordered by size */
+  quota_rank_today?: number
+  /** Another user received exactly today's award */
+  quota_rank_tied?: boolean
+  /** Share of today's check-ins this award is larger than */
+  beats_percent?: number
 }

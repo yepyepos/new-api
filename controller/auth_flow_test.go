@@ -795,7 +795,7 @@ func TestGenerateOAuthCodeCarriesAffiliateInLoginFlow(t *testing.T) {
 func TestRegistrationInvitationIsBoundToDiscordLoginFlow(t *testing.T) {
 	setupAuthFlowControllerTest(t)
 	invite := &model.RegistrationInvite{Name: "community", MaxUses: 1, Exempt: true}
-	code, err := model.CreateRegistrationInvite(invite)
+	code, err := model.CreateRegistrationInvite(invite, "")
 	require.NoError(t, err)
 	for _, test := range []struct {
 		provider, intent, code string

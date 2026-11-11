@@ -210,7 +210,7 @@ func TestDiscordInviteExemptionCannotBypassBlacklist(t *testing.T) {
 	defer sqlDB.Close()
 	require.NoError(t, model.DB.AutoMigrate(&model.User{}, &model.RegistrationInvite{}, &model.RegistrationAdmission{}))
 	invite := &model.RegistrationInvite{Name: "exempt", MaxUses: 1, Exempt: true}
-	code, err := model.CreateRegistrationInvite(invite)
+	code, err := model.CreateRegistrationInvite(invite, "")
 	require.NoError(t, err)
 	for _, test := range []struct {
 		name, body string

@@ -109,6 +109,57 @@ it('creates an exempt limited invitation and shows the usable code once without 
   ).toBeEnabled()
 })
 
+it('sends an operator-chosen Chinese code and rejects one that is too short', async () => {
+  const post = vi.spyOn(api, 'post').mockResolvedValue({
+    data: { success: true, data: { code: '鼓浪屿-2026' } },
+  })
+  const user = await renderAdmission()
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Yanxue trip')
+  const code = screen.getByRole('textbox', {
+    name: 'Custom invitation code (optional)',
+  })
+  await user.type(code, '短码')
+  await user.click(screen.getByRole('button', { name: 'Create invitation' }))
+  expect(
+    await screen.findByText(
+      'Use 6 to 32 letters, digits, hyphens or underscores, in any language'
+    )
+  ).toBeVisible()
+  expect(post).not.toHaveBeenCalled()
+
+  await user.clear(code)
+  await user.type(code, '鼓浪屿-2026')
+  await user.click(screen.getByRole('button', { name: 'Create invitation' }))
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith('/api/option/registration/invites', {
+      name: 'Yanxue trip',
+      code: '鼓浪屿-2026',
+      max_uses: 1,
+      exempt: false,
+      expires_at: 0,
+    })
+  )
+  expect(await screen.findByText('鼓浪屿-2026')).toBeVisible()
+})
+
+it('omits the code when the operator lets it be generated', async () => {
+  const post = vi.spyOn(api, 'post').mockResolvedValue({
+    data: { success: true, data: { code: 'GENERATED' } },
+  })
+  const user = await renderAdmission()
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Random')
+  await user.click(screen.getByRole('button', { name: 'Create invitation' }))
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith('/api/option/registration/invites', {
+      name: 'Random',
+      code: undefined,
+      max_uses: 1,
+      exempt: false,
+      expires_at: 0,
+    })
+  )
+})
+
 it('confirms disabling an invitation without deleting existing account admission', async () => {
   const remove = vi
     .spyOn(api, 'delete')

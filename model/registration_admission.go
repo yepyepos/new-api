@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
+	"golang.org/x/text/unicode/norm"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -49,21 +51,78 @@ func InitializeRegistrationBatch() error {
 }
 
 func HashRegistrationInvite(code string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.TrimSpace(code))))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(NormalizeRegistrationInviteCode(code))))
 }
 
-func CreateRegistrationInvite(invite *RegistrationInvite) (string, error) {
+// NormalizeRegistrationInviteCode puts a code in the one shape both hashing and
+// comparison use. Compatibility normalization folds look-alikes (for example a
+// full-width Latin letter) so a code copied out of a chat app still matches the
+// stored hash, and trimming drops the whitespace a pasted code picks up.
+func NormalizeRegistrationInviteCode(code string) string {
+	return norm.NFKC.String(strings.TrimSpace(code))
+}
+
+// RegistrationInviteCodeMinRunes is the shortest operator-chosen code. Short
+// codes over a wide alphabet are guessable, and the code is what admits a new
+// account, so a lower bound is enforced rather than merely suggested.
+const RegistrationInviteCodeMinRunes = 6
+
+// RegistrationInviteCodeMaxRunes bounds a code so it stays pasteable.
+const RegistrationInviteCodeMaxRunes = 32
+
+// ValidateRegistrationInviteCode rejects anything the operator may not hand out:
+// letters and digits of any script (so Chinese, Japanese and Korean codes work),
+// plus hyphen and underscore. Spaces, emoji and punctuation would be silently
+// mangled when someone types or pastes the code.
+func ValidateRegistrationInviteCode(code string) error {
+	if code == "" {
+		return common.NewMessage("Invitation code cannot be empty")
+	}
+	count := utf8.RuneCountInString(code)
+	if count < RegistrationInviteCodeMinRunes || count > RegistrationInviteCodeMaxRunes {
+		return common.NewMessage("Invitation code must be {{min}} to {{max}} characters", map[string]any{
+			"min": RegistrationInviteCodeMinRunes,
+			"max": RegistrationInviteCodeMaxRunes,
+		})
+	}
+	for _, r := range code {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' {
+			return common.NewMessage("Invitation code may only contain letters, digits, hyphens and underscores")
+		}
+	}
+	return nil
+}
+
+// CreateRegistrationInvite stores a registration invitation. A custom code is
+// hashed exactly like a generated one, so the database keeps no usable code
+// either way; the code is only ever visible in the creation response.
+func CreateRegistrationInvite(invite *RegistrationInvite, customCode string) (string, error) {
 	invite.Name = strings.TrimSpace(invite.Name)
 	if invite.Name == "" || utf8.RuneCountInString(invite.Name) > 80 || invite.MaxUses < 1 || invite.MaxUses > 1000000000 || invite.ExpiresAt > 253402300799 ||
 		(invite.ExpiresAt != 0 && invite.ExpiresAt <= time.Now().Unix()) {
 		return "", common.NewMessage("Invalid parameters")
 	}
-	code, err := common.GenerateRandomCharsKey(32)
-	if err != nil {
+	code := NormalizeRegistrationInviteCode(customCode)
+	if code == "" {
+		generated, err := common.GenerateRandomCharsKey(32)
+		if err != nil {
+			return "", err
+		}
+		code = generated
+	} else if err := ValidateRegistrationInviteCode(code); err != nil {
 		return "", err
 	}
 	invite.ID, invite.Used, invite.Disabled = 0, 0, false
 	invite.CodeHash, invite.CreatedAt = HashRegistrationInvite(code), time.Now().Unix()
+	// The unique index on code_hash rejects a re-used code. Checking first turns
+	// the common case into a translated message instead of a driver error.
+	var existing int64
+	if err := DB.Model(&RegistrationInvite{}).Where("code_hash = ?", invite.CodeHash).Count(&existing).Error; err != nil {
+		return "", err
+	}
+	if existing > 0 {
+		return "", common.NewMessage("This invitation code is already in use")
+	}
 	if err := DB.Create(invite).Error; err != nil {
 		return "", err
 	}

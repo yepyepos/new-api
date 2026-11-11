@@ -13,9 +13,29 @@ import (
 type Checkin struct {
 	Id           int    `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserId       int    `json:"user_id" gorm:"not null;uniqueIndex:idx_user_checkin_date"`
-	CheckinDate  string `json:"checkin_date" gorm:"type:varchar(10);not null;uniqueIndex:idx_user_checkin_date"` // 格式: YYYY-MM-DD
+	CheckinDate  string `json:"checkin_date" gorm:"type:varchar(10);not null;index:idx_checkin_date;uniqueIndex:idx_user_checkin_date"` // 格式: YYYY-MM-DD
 	QuotaAwarded int    `json:"quota_awarded" gorm:"not null"`
 	CreatedAt    int64  `json:"created_at" gorm:"bigint"`
+}
+
+// CheckinResult is one completed check-in together with the standings the
+// success dialog shows. The place and streak are read inside the check-in
+// transaction so they describe the same moment as the award.
+type CheckinResult struct {
+	Checkin
+	// RankToday is the order this check-in took among today's check-ins.
+	RankToday int `json:"rank_today"`
+	// TotalToday is how many users had checked in today, this one included.
+	TotalToday int `json:"total_today"`
+	// StreakDays counts consecutive site days ending today.
+	StreakDays int `json:"streak_days"`
+	// QuotaRankToday is this award's place when today's awards are ordered by
+	// size, so first place is the largest reward of the day.
+	QuotaRankToday int `json:"quota_rank_today"`
+	// QuotaRankTied reports that another user received exactly today's award.
+	QuotaRankTied bool `json:"quota_rank_tied"`
+	// BeatsPercent is the share of today's check-ins this award is larger than.
+	BeatsPercent int `json:"beats_percent"`
 }
 
 // CheckinRecord 用于API返回的签到记录（不包含敏感字段）
@@ -51,8 +71,93 @@ func HasCheckedInToday(userId int) (bool, error) {
 	return count > 0, err
 }
 
+// previousSiteDate returns the calendar day before the given YYYY-MM-DD date in
+// the given location. Calendar arithmetic keeps it correct across month, year
+// and daylight-saving boundaries.
+func previousSiteDate(date string, location *time.Location) (string, error) {
+	parsed, err := time.ParseInLocation("2006-01-02", date, location)
+	if err != nil {
+		return "", err
+	}
+	return parsed.AddDate(0, 0, -1).Format("2006-01-02"), nil
+}
+
+// checkinStreak counts the consecutive site days ending on today that the user
+// has checked in, so a gap of one day restarts the count at 1. It walks the
+// dates backwards in chunks so a long streak is never truncated by a row cap.
+func checkinStreak(tx *gorm.DB, userId int, today string, location *time.Location) (int, error) {
+	const chunk = 400
+	streak := 0
+	expected := today
+	for {
+		var dates []string
+		err := tx.Model(&Checkin{}).
+			Where("user_id = ? AND checkin_date <= ?", userId, expected).
+			Order("checkin_date DESC").
+			Limit(chunk).
+			Pluck("checkin_date", &dates).Error
+		if err != nil {
+			return 0, err
+		}
+		for _, date := range dates {
+			if date != expected {
+				return streak, nil
+			}
+			streak++
+			expected, err = previousSiteDate(expected, location)
+			if err != nil {
+				return 0, err
+			}
+		}
+		if len(dates) < chunk {
+			return streak, nil
+		}
+	}
+}
+
+// checkinStandings fills in where the just-recorded check-in sits among today's
+// check-ins. It runs inside the check-in transaction so the numbers describe
+// the same moment as the award.
+func checkinStandings(tx *gorm.DB, result *CheckinResult, location *time.Location) error {
+	var scheduled int64
+	if err := tx.Model(&Checkin{}).
+		Where("checkin_date = ? AND id <= ?", result.CheckinDate, result.Id).
+		Count(&scheduled).Error; err != nil {
+		return err
+	}
+	result.RankToday = int(scheduled)
+	var total int64
+	if err := tx.Model(&Checkin{}).Where("checkin_date = ?", result.CheckinDate).Count(&total).Error; err != nil {
+		return err
+	}
+	result.TotalToday = int(total)
+	var ahead int64
+	if err := tx.Model(&Checkin{}).
+		Where("checkin_date = ? AND quota_awarded > ?", result.CheckinDate, result.QuotaAwarded).
+		Count(&ahead).Error; err != nil {
+		return err
+	}
+	result.QuotaRankToday = int(ahead) + 1
+	var tied int64
+	if err := tx.Model(&Checkin{}).
+		Where("checkin_date = ? AND quota_awarded = ? AND user_id <> ?", result.CheckinDate, result.QuotaAwarded, result.UserId).
+		Count(&tied).Error; err != nil {
+		return err
+	}
+	result.QuotaRankTied = tied > 0
+	if result.TotalToday > 0 {
+		result.BeatsPercent = (result.TotalToday - result.QuotaRankToday) * 100 / result.TotalToday
+	}
+	streak, err := checkinStreak(tx, result.UserId, result.CheckinDate, location)
+	if err != nil {
+		return err
+	}
+	result.StreakDays = streak
+	return nil
+}
+
 // UserCheckin 执行用户签到
-func UserCheckin(userId int) (*Checkin, error) {
+func UserCheckin(userId int) (*CheckinResult, error) {
 	setting := operation_setting.CheckinSettingsSnapshot()
 	if !setting.Enabled {
 		return nil, common.NewMessage("Check-in feature is not enabled")
@@ -65,13 +170,17 @@ func UserCheckin(userId int) (*Checkin, error) {
 	if err != nil {
 		return nil, err
 	}
+	location, err := time.LoadLocation(setting.Timezone)
+	if err != nil {
+		return nil, err
+	}
 	awarded := setting.AwardQuota()
-	checkin := &Checkin{
+	result := &CheckinResult{Checkin: Checkin{
 		UserId:       userId,
 		CheckinDate:  today,
 		QuotaAwarded: awarded,
 		CreatedAt:    time.Now().Unix(),
-	}
+	}}
 
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		var user User
@@ -98,15 +207,20 @@ func UserCheckin(userId int) (*Checkin, error) {
 			return ErrWalletQuotaLimitExceeded
 		}
 		// The record and full reward commit together, including on SQLite.
-		if err := tx.Create(checkin).Error; err != nil {
+		if err := tx.Create(&result.Checkin).Error; err != nil {
 			return common.NewMessage("Check-in failed, please try again later")
 		}
-		result := tx.Model(&User{}).Where("id = ? AND quota = ? AND status = ?", userId, user.Quota, common.UserStatusEnabled).
+		// The standings describe this commit, so a failure here rolls the
+		// check-in back rather than reporting numbers nobody can reproduce.
+		if err := checkinStandings(tx, result, location); err != nil {
+			return err
+		}
+		update := tx.Model(&User{}).Where("id = ? AND quota = ? AND status = ?", userId, user.Quota, common.UserStatusEnabled).
 			Update("quota", gorm.Expr("quota + ?", awarded))
-		if result.Error != nil {
+		if update.Error != nil {
 			return common.NewMessage("Check-in failed: quota update error")
 		}
-		if result.RowsAffected != 1 {
+		if update.RowsAffected != 1 {
 			return common.NewMessage("Check-in failed, please try again later")
 		}
 		return nil
@@ -120,7 +234,7 @@ func UserCheckin(userId int) (*Checkin, error) {
 		common.SysError(common.LogText("failed to sync check-in quota for user %d: %s", userId, err))
 	}
 
-	return checkin, nil
+	return result, nil
 }
 
 // GetUserCheckinStats 获取用户签到统计信息

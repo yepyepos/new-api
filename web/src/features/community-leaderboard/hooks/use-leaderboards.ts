@@ -20,6 +20,8 @@ import { useQuery } from '@tanstack/react-query'
 
 import {
   getCheckinLeaderboard,
+  getExpandedCheckinLeaderboard,
+  getExpandedUsageLeaderboard,
   getUsageLeaderboard,
   type LeaderboardPeriod,
 } from '../api'
@@ -36,6 +38,29 @@ export function useUsageLeaderboard(period: LeaderboardPeriod) {
   return useQuery({
     queryKey: ['community-leaderboard', 'usage', period],
     queryFn: () => getUsageLeaderboard(period),
+    staleTime: 60 * 1000,
+  })
+}
+
+/** The whole check-in ranking; requested only once the reader expands it. */
+export function useExpandedCheckinLeaderboard(enabled: boolean) {
+  return useQuery({
+    queryKey: ['community-leaderboard', 'checkin', 'expanded'],
+    queryFn: getExpandedCheckinLeaderboard,
+    enabled,
+    staleTime: 60 * 1000,
+  })
+}
+
+/** The whole usage ranking; requested only once the reader expands it. */
+export function useExpandedUsageLeaderboard(
+  period: LeaderboardPeriod,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: ['community-leaderboard', 'usage', period, 'expanded'],
+    queryFn: () => getExpandedUsageLeaderboard(period),
+    enabled,
     staleTime: 60 * 1000,
   })
 }

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
@@ -62,7 +63,7 @@ func GenerateOAuthCode(c *gin.Context) {
 	request.InviteCode = strings.TrimSpace(request.InviteCode)
 	if oauth.GetProvider(request.Provider) == nil ||
 		(request.Intent != model.AuthFlowIntentLogin && request.Intent != model.AuthFlowIntentBind && request.Intent != model.AuthFlowIntentVerify) ||
-		len(request.Aff) > 32 || len(request.InviteCode) > 128 ||
+		len(request.Aff) > 32 || utf8.RuneCountInString(request.InviteCode) > model.RegistrationInviteCodeMaxRunes ||
 		(request.InviteCode != "" && (request.Provider != "discord" || request.Intent != model.AuthFlowIntentLogin)) ||
 		(request.Intent != model.AuthFlowIntentLogin && request.Aff != "") ||
 		(request.Intent != model.AuthFlowIntentVerify && (request.Scope != "" || len(request.Context) != 0)) {

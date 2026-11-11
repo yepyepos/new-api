@@ -84,6 +84,7 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 						require.NoError(t, DB.First(&legacy, 10).Error)
 						assert.Equal(t, 70, legacy.Quota)
 						assert.True(t, DB.Migrator().HasIndex(&Checkin{}, "idx_user_checkin_date"))
+						assert.True(t, DB.Migrator().HasIndex(&Checkin{}, "idx_checkin_date"), "the date-only index serves the daily leaderboard")
 						assert.Error(t, DB.Create(&Checkin{UserId: 10, CheckinDate: "2026-01-01"}).Error)
 					}
 					require.NoError(t, DB.Model(&RegistrationBatch{}).Where("id = 1").Updates(map[string]any{"enabled": true, "registration_limit": 1}).Error)
@@ -94,10 +95,26 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					require.NoError(t, DB.First(&batch, 1).Error)
 					assert.Equal(t, 1, batch.Used)
 					invite := &RegistrationInvite{Name: "exempt", MaxUses: 1, Exempt: true}
-					code, err := CreateRegistrationInvite(invite)
+					code, err := CreateRegistrationInvite(invite, "")
 					require.NoError(t, err)
 					assert.NotContains(t, invite.CodeHash, code)
 					hash := HashRegistrationInvite(code)
+					// An operator-chosen code is hashed like a generated one, so the
+					// database still keeps nothing usable, and Chinese codes work.
+					custom := &RegistrationInvite{Name: "custom", MaxUses: 1}
+					customCode, err := CreateRegistrationInvite(custom, "  鼓浪屿-2026  ")
+					require.NoError(t, err)
+					assert.Equal(t, "鼓浪屿-2026", customCode, "surrounding spaces are trimmed")
+					assert.NotContains(t, custom.CodeHash, customCode)
+					assert.Equal(t, custom.CodeHash, HashRegistrationInvite("鼓浪屿-2026"), "hashing is normalized")
+					_, err = GetRegistrationInvite(HashRegistrationInvite("鼓浪屿-2026"))
+					require.NoError(t, err, "a Chinese invitation code can be redeemed")
+					_, err = CreateRegistrationInvite(&RegistrationInvite{Name: "again", MaxUses: 1}, "鼓浪屿-2026")
+					assert.ErrorContains(t, err, "already in use")
+					for _, rejected := range []string{"短码", "ab", "has space", "emoji😀ok", "punct!code"} {
+						_, err := CreateRegistrationInvite(&RegistrationInvite{Name: "bad", MaxUses: 1}, rejected)
+						assert.Error(t, err, "must reject %q", rejected)
+					}
 					exempt, err := DiscordAdmissionExempt("101", hash)
 					require.NoError(t, err)
 					assert.True(t, exempt)
@@ -124,7 +141,7 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					for _, invalid := range []RegistrationInvite{
 						{Name: "disabled", MaxUses: 1}, {Name: "expired", MaxUses: 1},
 					} {
-						code, err := CreateRegistrationInvite(&invalid)
+						code, err := CreateRegistrationInvite(&invalid, "")
 						require.NoError(t, err)
 						changes := map[string]any{"disabled": true}
 						if invalid.Name == "expired" {
@@ -136,7 +153,7 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					}
 					// Two contenders for the last invite slot: exactly one account commits.
 					last := &RegistrationInvite{Name: "last", MaxUses: 1}
-					lastCode, err := CreateRegistrationInvite(last)
+					lastCode, err := CreateRegistrationInvite(last, "")
 					require.NoError(t, err)
 					results := make(chan error, 2)
 					var group sync.WaitGroup
@@ -170,6 +187,13 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					claim, err := UserCheckin(invited.Id)
 					require.NoError(t, err)
 					assert.Equal(t, 50, claim.QuotaAwarded)
+					// The standings describe the first check-in of the day.
+					assert.Equal(t, 1, claim.RankToday)
+					assert.Equal(t, 1, claim.TotalToday)
+					assert.Equal(t, 1, claim.QuotaRankToday)
+					assert.False(t, claim.QuotaRankTied)
+					assert.Equal(t, 1, claim.StreakDays)
+					assert.Zero(t, claim.BeatsPercent, "the only check-in of the day beats nobody")
 					_, err = UserCheckin(invited.Id)
 					assert.ErrorContains(t, err, "Already checked in today")
 					require.NoError(t, DB.First(invited, invited.Id).Error)
@@ -190,6 +214,38 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					fixed, fixedErr := UserCheckin(ranged.Id)
 					require.NoError(t, fixedErr)
 					assert.Equal(t, 70, fixed.QuotaAwarded)
+					// The streak counts consecutive site days ending today.
+					today, err := operation_setting.CheckinSettingsSnapshot().Today()
+					require.NoError(t, err)
+					location, err := time.LoadLocation("Asia/Hong_Kong")
+					require.NoError(t, err)
+					streaker := &User{Username: "streaker", Status: common.UserStatusEnabled, AffCode: "streaker", Quota: 1}
+					require.NoError(t, DB.Create(streaker).Error)
+					yesterday, err := previousSiteDate(today, location)
+					require.NoError(t, err)
+					dayBefore, err := previousSiteDate(yesterday, location)
+					require.NoError(t, err)
+					require.NoError(t, DB.Create(&Checkin{UserId: streaker.Id, CheckinDate: yesterday, QuotaAwarded: 10}).Error)
+					require.NoError(t, DB.Create(&Checkin{UserId: streaker.Id, CheckinDate: dayBefore, QuotaAwarded: 10}).Error)
+					streakClaim, err := UserCheckin(streaker.Id)
+					require.NoError(t, err)
+					assert.Equal(t, 3, streakClaim.StreakDays, "today plus the two consecutive days before it")
+					// A gap one day back restarts the streak, and the calendar day
+					// before the first of a year is the last of the previous year.
+					gapped := &User{Username: "gapped", Status: common.UserStatusEnabled, AffCode: "gapped", Quota: 1}
+					require.NoError(t, DB.Create(gapped).Error)
+					threeDaysAgo, err := previousSiteDate(dayBefore, location)
+					require.NoError(t, err)
+					require.NoError(t, DB.Create(&Checkin{UserId: gapped.Id, CheckinDate: threeDaysAgo, QuotaAwarded: 10}).Error)
+					gapClaim, err := UserCheckin(gapped.Id)
+					require.NoError(t, err)
+					assert.Equal(t, 1, gapClaim.StreakDays, "a missed day restarts the count")
+					crossYear, err := previousSiteDate("2026-01-01", time.UTC)
+					require.NoError(t, err)
+					assert.Equal(t, "2025-12-31", crossYear)
+					crossMonth, err := previousSiteDate("2026-03-01", time.UTC)
+					require.NoError(t, err)
+					assert.Equal(t, "2026-02-28", crossMonth)
 					assert.Error(t, (operation_setting.CheckinSetting{Quota: 50, MinQuota: 70, MaxQuota: 60, Timezone: "UTC"}).Validate(), "an inverted range must be rejected")
 					// The console saves each range end in its own request, so a
 					// half-configured range must stay valid; only an inverted or
@@ -246,27 +302,44 @@ func TestCommunityAdmissionDatabaseMatrix(t *testing.T) {
 					require.NoError(t, DB.Create(&Log{UserId: ordinary.Id, Type: LogTypeConsume, Quota: 30, CreatedAt: time.Now().Unix()}).Error)
 					require.NoError(t, DB.Create(&Log{UserId: invited.Id, Type: LogTypeConsume, Quota: 90, CreatedAt: time.Now().Unix()}).Error)
 					require.NoError(t, DB.Create(&Log{UserId: invited.Id, Type: LogTypeTopup, Quota: 500, CreatedAt: time.Now().Unix()}).Error)
-					usage, usageTotal, err := GetUsageLeaderboard(0, 10)
+					usage, err := GetUsageLeaderboard(0, 10)
 					require.NoError(t, err)
-					require.Len(t, usage, 2, "top-ups are not consumption")
-					assert.Equal(t, invited.Id, usage[0].UserId)
-					assert.Equal(t, int64(90), usage[0].TotalQuota)
-					assert.Equal(t, "invited", usage[0].Username)
-					assert.Equal(t, int64(2), usageTotal, "the total counts every consuming user")
-					_, cappedTotal, err := GetUsageLeaderboard(0, 1)
+					require.Len(t, usage.Top, 2, "top-ups are not consumption")
+					assert.Equal(t, invited.Id, usage.Top[0].UserId)
+					assert.Equal(t, int64(90), usage.Top[0].TotalQuota)
+					assert.Equal(t, "invited", usage.Top[0].Username)
+					assert.Equal(t, int64(2), usage.Total, "the total counts every consuming user")
+					assert.Empty(t, usage.Bottom, "the lightest consumers are never listed")
+					capped, err := GetUsageLeaderboard(0, 1)
 					require.NoError(t, err)
-					assert.Equal(t, int64(2), cappedTotal, "limiting the rows must not change the total")
-					checkins, checkinTotal, err := GetTodayCheckinLeaderboard(checkinDay, 10)
+					assert.Equal(t, int64(2), capped.Total, "limiting the rows must not change the total")
+					require.Len(t, capped.Top, 1)
+					assert.Empty(t, capped.Bottom, "the collapsed board only keeps its head")
+					expandedUsage, expandedUsageTotal, err := GetUsageLeaderboardRows(0, 0)
 					require.NoError(t, err)
-					require.NotEmpty(t, checkins)
-					assert.Equal(t, int64(len(checkins)), checkinTotal)
-					for _, row := range checkins {
+					require.Len(t, expandedUsage, 2)
+					assert.Equal(t, int64(2), expandedUsageTotal)
+					assert.Equal(t, 1, expandedUsage[0].Rank)
+					assert.Equal(t, 2, expandedUsage[1].Rank, "the expanded ranking is numbered from the top")
+					assert.Equal(t, ordinary.Id, expandedUsage[1].UserId)
+					checkins, err := GetTodayCheckinLeaderboard(checkinDay, 10)
+					require.NoError(t, err)
+					require.NotEmpty(t, checkins.Top)
+					assert.Equal(t, int64(len(checkins.Top)), checkins.Total)
+					for _, row := range checkins.Top {
 						assert.GreaterOrEqual(t, row.QuotaAwarded, 1)
 					}
-					empty, emptyTotal, err := GetTodayCheckinLeaderboard("1990-01-01", 10)
+					expandedCheckins, expandedCheckinsTotal, err := GetTodayCheckinLeaderboardRows(checkinDay, 0)
 					require.NoError(t, err)
-					assert.Empty(t, empty, "users who did not check in are omitted")
-					assert.Zero(t, emptyTotal)
+					require.Len(t, expandedCheckins, len(checkins.Top))
+					assert.Equal(t, checkins.Total, expandedCheckinsTotal)
+					for i, row := range expandedCheckins {
+						assert.Equal(t, i+1, row.Rank)
+					}
+					empty, err := GetTodayCheckinLeaderboard("1990-01-01", 10)
+					require.NoError(t, err)
+					assert.Empty(t, empty.Top, "users who did not check in are omitted")
+					assert.Zero(t, empty.Total)
 				})
 			}
 		})

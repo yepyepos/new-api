@@ -21,12 +21,20 @@ import { Switch } from '@/components/ui/switch'
 
 import { createRegistrationInvitation } from './registration-admission-api'
 
+const INVITE_CODE_PATTERN = /^[\p{L}\p{N}_-]{6,32}$/u
+
 const schema = z
   .object({
     name: z.string().trim().min(1).max(80),
+    code: z.string().trim(),
     max_uses: z.coerce.number().int().min(1).max(1000000000),
     exempt: z.boolean(),
     expires_at: z.string(),
+  })
+  .refine((values) => !values.code || INVITE_CODE_PATTERN.test(values.code), {
+    path: ['code'],
+    message:
+      'Use 6 to 32 letters, digits, hyphens or underscores, in any language',
   })
   .refine(
     (values) =>
@@ -41,7 +49,13 @@ export function RegistrationInviteForm() {
   const [createdCode, setCreatedCode] = useState('')
   const form = useForm<Values>({
     resolver: zodResolver(schema) as Resolver<Values>,
-    defaultValues: { name: '', max_uses: 1, exempt: false, expires_at: '' },
+    defaultValues: {
+      name: '',
+      code: '',
+      max_uses: 1,
+      exempt: false,
+      expires_at: '',
+    },
   })
   const mutation = useMutation({
     mutationFn: createRegistrationInvitation,
@@ -63,7 +77,10 @@ export function RegistrationInviteForm() {
           className='space-y-4'
           onSubmit={form.handleSubmit((values) =>
             mutation.mutate({
-              ...values,
+              name: values.name,
+              code: values.code || undefined,
+              max_uses: values.max_uses,
+              exempt: values.exempt,
               expires_at: values.expires_at
                 ? Math.floor(Date.parse(values.expires_at) / 1000)
                 : 0,
@@ -83,6 +100,31 @@ export function RegistrationInviteForm() {
                     disabled={mutation.isPending}
                   />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='code'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Custom invitation code (optional)')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    maxLength={32}
+                    autoComplete='off'
+                    spellCheck={false}
+                    placeholder={t('Leave empty to generate a random one')}
+                    disabled={mutation.isPending}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    '6 to 32 letters, digits, hyphens or underscores, in any language. The code is only shown once after creation.'
+                  )}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

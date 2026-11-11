@@ -39,6 +39,7 @@ export async function saveRegistrationBatch(
 
 export async function createRegistrationInvitation(request: {
   name: string
+  code?: string
   max_uses: number
   exempt: boolean
   expires_at: number

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 
@@ -42,7 +42,20 @@ it('uses the site day and keeps the daily chance available after a balance rejec
     })
     .mockImplementation(async () => {
       awarded = true
-      return { data: { success: true, data: { quota_awarded: 50 } } }
+      return {
+        data: {
+          success: true,
+          data: {
+            quota_awarded: 50,
+            rank_today: 37,
+            total_today: 152,
+            streak_days: 5,
+            quota_rank_today: 12,
+            quota_rank_tied: false,
+            beats_percent: 92,
+          },
+        },
+      }
     })
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -66,10 +79,20 @@ it('uses the site day and keeps the daily chance available after a balance rejec
   await waitFor(() => expect(claim).toBeEnabled())
   expect(post).toHaveBeenCalledTimes(1)
   await user.click(claim)
+  // The receipt reports the standings the backend computed for this claim.
+  const receipt = await screen.findByRole('dialog')
+  expect(receipt).toHaveTextContent('Check-in 37 of 152 today')
+  expect(receipt).toHaveTextContent('5 days')
+  expect(receipt).toHaveTextContent('Place 12')
+  expect(receipt).toHaveTextContent("Beats 92% of today's check-ins")
+  expect(post).toHaveBeenCalledTimes(2)
+  await user.click(within(receipt).getByRole('button', { name: 'Got it' }))
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Checked in' })).toBeDisabled()
   )
-  expect(post).toHaveBeenCalledTimes(2)
 })
 
 it('shows the fixed reward when the operator has not configured a range', async () => {

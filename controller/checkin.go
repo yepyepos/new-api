@@ -65,7 +65,13 @@ func DoCheckin(c *gin.Context) {
 	}
 	model.RecordLog(userId, model.LogTypeSystem, common.NewMessage("Daily check-in, received {{quota}}", map[string]any{"quota": logger.FormatQuota(checkin.QuotaAwarded)}))
 	common.ApiSuccessT(c, "Check-in successful", gin.H{
-		"quota_awarded": checkin.QuotaAwarded,
-		"checkin_date":  checkin.CheckinDate,
+		"quota_awarded":    checkin.QuotaAwarded,
+		"checkin_date":     checkin.CheckinDate,
+		"rank_today":       checkin.RankToday,
+		"total_today":      checkin.TotalToday,
+		"streak_days":      checkin.StreakDays,
+		"quota_rank_today": checkin.QuotaRankToday,
+		"quota_rank_tied":  checkin.QuotaRankTied,
+		"beats_percent":    checkin.BeatsPercent,
 	})
 }

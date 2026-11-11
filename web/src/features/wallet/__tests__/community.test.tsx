@@ -5,7 +5,13 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { render, renderHook, screen, waitFor } from '@testing-library/react'
+import {
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import i18next from 'i18next'
 import type { ReactNode } from 'react'
@@ -106,11 +112,32 @@ it('retains real daily check-in and refreshes the quota balance after claiming',
   })
   const post = vi.spyOn(api, 'post').mockImplementation(async () => {
     claimed = true
-    return { data: { success: true, data: { quota_awarded: 500000 } } }
+    return {
+      data: {
+        success: true,
+        data: {
+          quota_awarded: 500000,
+          rank_today: 1,
+          total_today: 1,
+          streak_days: 1,
+          quota_rank_today: 1,
+          quota_rank_tied: false,
+          beats_percent: 0,
+        },
+      },
+    }
   })
   await renderCommunity(communityClient(true), <Wallet />)
   const user = userEvent.setup()
-  await user.click(await screen.findByRole('button', { name: 'Check in now' }))
+  // The card re-renders once its status query settles, so the button is read
+  // after that instead of from the first paint.
+  expect(await screen.findByRole('heading', { name: '2026-10' })).toBeVisible()
+  await user.click(screen.getByRole('button', { name: 'Check in now' }))
+  // The receipt opens on top of the card, so it is dismissed before the card
+  // is read again.
+  const receipt = await screen.findByRole('dialog')
+  expect(receipt).toHaveTextContent('Only check-in today')
+  await user.click(within(receipt).getByRole('button', { name: 'Got it' }))
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Checked in' })).toBeDisabled()
   )

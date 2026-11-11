@@ -25,24 +25,45 @@ export type CheckinLeaderboardRow = {
   user_id: number
   username: string
   quota_awarded: number
+  rank?: number
 }
 
 export type UsageLeaderboardRow = {
   user_id: number
   username: string
   total_quota: number
+  rank?: number
 }
 
-export type CheckinLeaderboard = {
+/** Both ends of a ranking plus how many rows it has in total. */
+export type LeaderboardEnds<T> = {
+  top: T[]
+  bottom: T[]
+  total: number
+}
+
+/** The whole ranking, from first place down, returned by expanded=true. */
+export type LeaderboardRows<T> = {
+  rows: T[]
+  total: number
+  truncated: boolean
+}
+
+export type CheckinLeaderboard = LeaderboardEnds<CheckinLeaderboardRow> & {
   date: string
-  rows: CheckinLeaderboardRow[]
-  total: number
 }
 
-export type UsageLeaderboard = {
+export type CheckinLeaderboardExpanded =
+  LeaderboardRows<CheckinLeaderboardRow> & {
+    date: string
+  }
+
+export type UsageLeaderboard = LeaderboardEnds<UsageLeaderboardRow> & {
   period: LeaderboardPeriod
-  rows: UsageLeaderboardRow[]
-  total: number
+}
+
+export type UsageLeaderboardExpanded = LeaderboardRows<UsageLeaderboardRow> & {
+  period: LeaderboardPeriod
 }
 
 type LeaderboardResponse<T> = {
@@ -58,12 +79,30 @@ export async function getCheckinLeaderboard(): Promise<CheckinLeaderboard> {
   return requireServerSuccess(res.data).data
 }
 
+export async function getExpandedCheckinLeaderboard(): Promise<CheckinLeaderboardExpanded> {
+  const res = await api.get<LeaderboardResponse<CheckinLeaderboardExpanded>>(
+    '/api/community/checkin-leaderboard',
+    { params: { expanded: true } }
+  )
+  return requireServerSuccess(res.data).data
+}
+
 export async function getUsageLeaderboard(
   period: LeaderboardPeriod
 ): Promise<UsageLeaderboard> {
   const res = await api.get<LeaderboardResponse<UsageLeaderboard>>(
     '/api/community/usage-leaderboard',
     { params: { period } }
+  )
+  return requireServerSuccess(res.data).data
+}
+
+export async function getExpandedUsageLeaderboard(
+  period: LeaderboardPeriod
+): Promise<UsageLeaderboardExpanded> {
+  const res = await api.get<LeaderboardResponse<UsageLeaderboardExpanded>>(
+    '/api/community/usage-leaderboard',
+    { params: { period, expanded: true } }
   )
   return requireServerSuccess(res.data).data
 }

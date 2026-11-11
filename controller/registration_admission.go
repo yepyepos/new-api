@@ -50,6 +50,7 @@ func CreateRegistrationInvitation(c *gin.Context) {
 	setAuthNoStore(c)
 	var request struct {
 		Name      string `json:"name"`
+		Code      string `json:"code"`
 		MaxUses   int    `json:"max_uses"`
 		Exempt    bool   `json:"exempt"`
 		ExpiresAt int64  `json:"expires_at"`
@@ -59,7 +60,7 @@ func CreateRegistrationInvitation(c *gin.Context) {
 		return
 	}
 	invite := model.RegistrationInvite{Name: request.Name, MaxUses: request.MaxUses, Exempt: request.Exempt, ExpiresAt: request.ExpiresAt}
-	code, err := model.CreateRegistrationInvite(&invite)
+	code, err := model.CreateRegistrationInvite(&invite, request.Code)
 	if err != nil {
 		common.ApiError(c, err)
 		return

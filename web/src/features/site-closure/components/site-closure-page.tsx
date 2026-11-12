@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { RichContent } from '@/components/rich-content'
@@ -31,10 +32,14 @@ type SiteClosurePageProps = {
 /**
  * Full-screen closure notice.
  *
- * It renders instead of the routed page, so nothing behind it is mounted: the
- * login form cannot be reached, and a visitor without a session sees only the
- * announcement. It is deliberately not a dismissible dialog — a dialog would
- * leave the console usable underneath it.
+ * It renders instead of the routed page, so nothing behind it is mounted and a
+ * visitor without a session sees only the announcement. It is deliberately not
+ * a dismissible dialog — a dialog would leave the console usable underneath it.
+ *
+ * The one way out is the administrator sign-in link: the closure replaces the
+ * page no matter how the visitor arrived, so without it a signed-out operator
+ * would have no route to the switch that reopens the site. The link only opens
+ * the form; the server still refuses ordinary accounts at login.
  */
 export function SiteClosurePage(props: SiteClosurePageProps) {
   const { t } = useTranslation()
@@ -69,6 +74,16 @@ export function SiteClosurePage(props: SiteClosurePageProps) {
           {t('API and console access will resume once the site reopens.')}
         </p>
       </div>
+      <footer className='mt-12'>
+        {/* A plain link, not a Button: the Button component renders
+            role="button", which would announce a navigation as an action. */}
+        <Link
+          to='/sign-in'
+          className='text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 rounded-md text-sm underline-offset-4 outline-none hover:underline focus-visible:ring-3'
+        >
+          {t('Administrator sign-in')}
+        </Link>
+      </footer>
     </div>
   )
 }

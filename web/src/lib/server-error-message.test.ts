@@ -55,6 +55,15 @@ describe('server error message mapping', () => {
       'Please sign in with Discord. Other sign-in methods are reserved for administrators.'
     )
   })
+  test('maps the site closure refusal to the closure notice heading', () => {
+    // The sign-in form stays reachable while the site is closed so an operator
+    // can sign in. An ordinary account is still refused, and the form must say
+    // why instead of showing the generic login failure.
+    expect(getServerErrorMessageKey({ code: 'SITE_CLOSED' })).toBe(
+      'The site is temporarily closed'
+    )
+  })
+
   test('maps the active-session limit to recovery instructions', () => {
     const message = getServerErrorMessageKey({ code: 'AUTH_SESSION_LIMIT' })
 

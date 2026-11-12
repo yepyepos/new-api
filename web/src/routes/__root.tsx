@@ -22,6 +22,7 @@ import {
   createRootRouteWithContext,
   Outlet,
   redirect,
+  useLocation,
   useNavigate,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
@@ -34,8 +35,9 @@ import { saveAffiliateCode } from '@/features/auth/lib/storage'
 import { GeneralError } from '@/features/errors/general-error'
 import { NotFoundError } from '@/features/errors/not-found-error'
 import { getSetupStatus } from '@/features/setup/api'
-import { SiteClosurePage } from '@/features/site-closure/components/site-closure-page'
 import { useSiteClosure } from '@/features/site-closure/api'
+import { SiteClosurePage } from '@/features/site-closure/components/site-closure-page'
+import { closureHidesRoute } from '@/features/site-closure/lib/gate'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import {
   bootstrapAuthentication,
@@ -44,7 +46,6 @@ import {
 } from '@/lib/auth-session'
 import { subscribeAuthSessionEvents } from '@/lib/auth-session-sync'
 import { resolveLegacyRoute } from '@/lib/legacy-route'
-import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
 function RootComponent() {
@@ -58,11 +59,12 @@ function RootComponent() {
   // than riding the cached status query.
   const { closure } = useSiteClosure()
   const role = useAuthStore((state) => state.auth.user?.role)
+  const pathname = useLocation({ select: (location) => location.pathname })
   // Administrators keep the console while the site is closed: the switch that
   // reopens it lives there, and locking the operator out would leave no way
-  // back in. Everyone else, signed in or not, sees only the notice.
-  const closureBlocksPage =
-    closure.closed && !(typeof role === 'number' && role >= ROLE.ADMIN)
+  // back in. Everyone else sees only the notice, and the sign-in route stays
+  // open so a signed-out operator can still prove which of the two they are.
+  const closureBlocksPage = closureHidesRoute(closure.closed, role, pathname)
 
   useEffect(() => {
     const aff = new URLSearchParams(window.location.search).get('aff')?.trim()
